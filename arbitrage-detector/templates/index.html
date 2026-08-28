@@ -103,7 +103,10 @@
     <div class="grid">
       <div>
         <label for="apiKey">API Key (the-odds-api.com)</label>
-        <input id="apiKey" type="password" placeholder="sua chave gratuita">
+        <div style="display:flex; gap:6px;">
+          <input id="apiKey" type="text" autocomplete="off" spellcheck="false" placeholder="cole sua chave gratuita aqui">
+          <button id="toggleKey" type="button" style="padding: 8px 10px;">👁</button>
+        </div>
       </div>
       <div>
         <label for="sport">Esporte</label>
@@ -170,6 +173,17 @@
 
   $('loadSports').addEventListener('click', loadSports);
   $('toggle').addEventListener('click', toggleMonitoring);
+  $('toggleKey').addEventListener('click', () => {
+    const field = $('apiKey');
+    field.type = field.type === 'password' ? 'text' : 'password';
+  });
+
+  // Lembra a chave só neste navegador, para não precisar colar de novo a cada visita.
+  const savedKey = localStorage.getItem('odds-api-key');
+  if (savedKey) $('apiKey').value = savedKey;
+  $('apiKey').addEventListener('change', (e) => {
+    localStorage.setItem('odds-api-key', e.target.value.trim());
+  });
 
   async function loadSports() {
     const apiKey = $('apiKey').value.trim();

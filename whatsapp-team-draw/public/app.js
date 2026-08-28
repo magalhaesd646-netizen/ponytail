@@ -166,8 +166,9 @@ function renderDraw(draw, goalkeepers) {
     goalkeepersNote.hidden = true;
   }
 
-  document.getElementById("share-text").value = formatShareText(draw, goalkeepers);
-  document.getElementById("native-share-btn").hidden = !navigator.share;
+  const text = formatShareText(draw, goalkeepers);
+  document.getElementById("share-text").value = text;
+  document.getElementById("whatsapp-btn").href = `https://wa.me/?text=${encodeURIComponent(text)}`;
 
   resultSection.hidden = false;
   resultSection.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -227,13 +228,4 @@ document.getElementById("copy-btn").addEventListener("click", async (e) => {
   setTimeout(() => {
     button.textContent = original;
   }, 2500);
-});
-
-document.getElementById("native-share-btn").addEventListener("click", async () => {
-  const text = document.getElementById("share-text").value;
-  try {
-    await navigator.share({ title: "Sorteio de Times", text });
-  } catch (err) {
-    // Cancelado ou bloqueado: o texto já está visível/selecionável no campo acima.
-  }
 });

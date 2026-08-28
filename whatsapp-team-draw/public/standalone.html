@@ -391,6 +391,11 @@ button:focus-visible {
 
 .share-actions .btn {
   flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+  text-align: center;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -455,7 +460,7 @@ button:focus-visible {
         <textarea id="share-text" readonly rows="7"></textarea>
         <div class="share-actions">
           <button id="copy-btn" class="btn btn--accent">Copiar texto</button>
-          <button id="native-share-btn" class="btn btn--sky" hidden>Compartilhar</button>
+          <a id="whatsapp-btn" class="btn btn--sky" target="_blank" rel="noopener">Enviar no WhatsApp</a>
         </div>
       </div>
     </section>
@@ -714,8 +719,9 @@ function renderDraw(draw, goalkeepers) {
     goalkeepersNote.hidden = true;
   }
 
-  document.getElementById("share-text").value = formatShareText(draw, goalkeepers);
-  document.getElementById("native-share-btn").hidden = !navigator.share;
+  const text = formatShareText(draw, goalkeepers);
+  document.getElementById("share-text").value = text;
+  document.getElementById("whatsapp-btn").href = `https://wa.me/?text=${encodeURIComponent(text)}`;
 
   resultSection.hidden = false;
   resultSection.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -775,15 +781,6 @@ document.getElementById("copy-btn").addEventListener("click", async (e) => {
   setTimeout(() => {
     button.textContent = original;
   }, 2500);
-});
-
-document.getElementById("native-share-btn").addEventListener("click", async () => {
-  const text = document.getElementById("share-text").value;
-  try {
-    await navigator.share({ title: "Sorteio de Times", text });
-  } catch (err) {
-    // Cancelado ou bloqueado: o texto já está visível/selecionável no campo acima.
-  }
 });
 
 </script>

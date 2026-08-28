@@ -112,9 +112,9 @@
   const messageEl = document.getElementById('message');
   const restartBtn = document.getElementById('restart');
 
-  const GRID_SIZE = 20;
+  const GRID_SIZE = 16;
   const CELL = canvas.width / GRID_SIZE;
-  const SPEED_MS = 110;
+  const SPEED_MS = 220;
 
   let snake, direction, nextDirection, food, score, best, gameOver, running, loopId;
 
@@ -169,10 +169,65 @@
     ctx.fill();
 
     snake.forEach((seg, idx) => {
-      ctx.fillStyle = idx === 0 ? '#4ade80' : '#22c55e';
+      if (idx === 0) {
+        drawHead(seg, direction);
+        return;
+      }
+      ctx.fillStyle = '#22c55e';
       roundRect(seg.x * CELL + 1, seg.y * CELL + 1, CELL - 2, CELL - 2, 4);
       ctx.fill();
     });
+  }
+
+  function drawHead(seg, dir) {
+    const cx = seg.x * CELL + CELL / 2;
+    const cy = seg.y * CELL + CELL / 2;
+    const r = CELL / 2 - 1;
+
+    // rosto
+    ctx.fillStyle = '#f4c39a';
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.fill();
+
+    // cabelo
+    ctx.fillStyle = '#3b2415';
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, Math.PI, Math.PI * 2);
+    ctx.fill();
+
+    // olhos (posição muda conforme a direção)
+    const eyeGap = r * 0.45;
+    let e1 = { x: cx, y: cy }, e2 = { x: cx, y: cy };
+    if (dir === 'right' || dir === 'left') {
+      const dx = dir === 'right' ? r * 0.15 : -r * 0.15;
+      e1 = { x: cx + dx, y: cy - eyeGap * 0.7 };
+      e2 = { x: cx + dx, y: cy + eyeGap * 0.7 };
+    } else {
+      const dy = dir === 'down' ? r * 0.15 : -r * 0.15;
+      e1 = { x: cx - eyeGap * 0.7, y: cy + dy };
+      e2 = { x: cx + eyeGap * 0.7, y: cy + dy };
+    }
+    [e1, e2].forEach((e) => {
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(e.x, e.y, r * 0.22, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.fillStyle = '#1f2937';
+      ctx.beginPath();
+      ctx.arc(e.x, e.y, r * 0.1, 0, Math.PI * 2);
+      ctx.fill();
+    });
+
+    // boca (na direção do movimento)
+    ctx.strokeStyle = '#7a3b2e';
+    ctx.lineWidth = Math.max(1, r * 0.12);
+    ctx.beginPath();
+    if (dir === 'right') ctx.arc(cx, cy, r * 0.55, -0.35, 0.35);
+    if (dir === 'left') ctx.arc(cx, cy, r * 0.55, Math.PI - 0.35, Math.PI + 0.35);
+    if (dir === 'down') ctx.arc(cx, cy, r * 0.55, Math.PI / 2 - 0.35, Math.PI / 2 + 0.35);
+    if (dir === 'up') ctx.arc(cx, cy, r * 0.55, -Math.PI / 2 - 0.35, -Math.PI / 2 + 0.35);
+    ctx.stroke();
   }
 
   function roundRect(x, y, w, h, r) {

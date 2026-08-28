@@ -90,9 +90,9 @@ main {
 }
 
 .crest {
-  width: 132px;
+  width: 140px;
   margin: 0 auto 0.85rem;
-  padding: 10px;
+  padding: 20px;
   border-radius: 20px;
   background: #fff;
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
@@ -102,6 +102,7 @@ main {
   display: block;
   width: 100%;
   height: auto;
+  object-fit: contain;
 }
 
 .scoreboard__title {

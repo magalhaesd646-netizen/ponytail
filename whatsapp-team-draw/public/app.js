@@ -138,7 +138,7 @@ function renderDraw(draw, goalkeepers) {
     body.className = "team__body";
 
     const title = document.createElement("h3");
-    title.textContent = `${team.name} · ${team.players.length}`;
+    title.textContent = team.name;
     body.appendChild(title);
 
     const ul = document.createElement("ul");

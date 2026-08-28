@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Detector de Arbitragem Esportiva</title>
+<style>
+  :root {
+    --bg: #0f172a;
+    --panel: #1e293b;
+    --border: #334155;
+    --text: #e2e8f0;
+    --muted: #94a3b8;
+    --accent: #38bdf8;
+    --good: #22c55e;
+    --warn: #fbbf24;
+    --bad: #f87171;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', Roboto, sans-serif;
+    padding: 20px;
+  }
+  h1 { font-size: 1.5rem; margin-bottom: 4px; }
+  p.subtitle { color: var(--muted); margin-top: 0; }
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    margin-bottom: 16px;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+    gap: 12px;
+  }
+  label { display: block; font-size: 0.8rem; color: var(--muted); margin-bottom: 4px; }
+  input, select {
+    width: 100%;
+    padding: 8px;
+    background: #0b1220;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text);
+    font-size: 0.9rem;
+  }
+  button {
+    background: var(--accent);
+    color: #0f172a;
+    border: none;
+    padding: 10px 18px;
+    border-radius: 6px;
+    font-weight: bold;
+    cursor: pointer;
+    font-size: 0.9rem;
+  }
+  button.stop { background: var(--bad); }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+  #status {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    font-size: 0.85rem;
+    color: var(--muted);
+    margin-top: 10px;
+  }
+  #status span b { color: var(--accent); }
+  table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); }
+  th { color: var(--muted); font-weight: 600; }
+  tr:hover { background: rgba(255,255,255,0.03); }
+  .profit { color: var(--good); font-weight: bold; }
+  .empty { color: var(--muted); padding: 24px; text-align: center; }
+  .error { color: var(--bad); padding: 12px; }
+  .legs { font-size: 0.8rem; color: var(--muted); }
+  .legs div { margin-bottom: 2px; }
+  .disclaimer {
+    background: #1e1308;
+    border: 1px solid #78350f;
+    color: var(--warn);
+    padding: 12px 16px;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    margin-bottom: 16px;
+  }
+</style>
+</head>
+<body>
+  <h1>📊 Detector de Arbitragem Esportiva</h1>
+  <p class="subtitle">Compara odds entre casas de apostas via API pública e aponta combinações com lucro garantido.</p>
+
+  <div class="disclaimer">
+    ⚠️ Esta ferramenta só lê odds públicas e faz o cálculo — ela não loga em nenhuma casa de apostas e não aposta por você.
+    Janelas de arbitragem fecham rápido (odds mudam a todo instante) e algumas casas limitam contas que fazem "surebets" com frequência.
+    Confirme sempre as odds direto no site da casa antes de apostar valor real.
+  </div>
+
+  <div class="panel">
+    <div class="grid">
+      <div>
+        <label for="apiKey">API Key (the-odds-api.com)</label>
+        <input id="apiKey" type="password" placeholder="sua chave gratuita">
+      </div>
+      <div>
+        <label for="sport">Esporte</label>
+        <select id="sport">
+          <option value="upcoming">Todos os próximos jogos</option>
+        </select>
+      </div>
+      <div>
+        <label for="regions">Regiões das casas</label>
+        <select id="regions">
+          <option value="us,uk,eu,au">Todas</option>
+          <option value="uk,eu" selected>UK + EU</option>
+          <option value="us">US</option>
+          <option value="au">AU</option>
+        </select>
+      </div>
+      <div>
+        <label for="minProfit">Lucro mínimo (%)</label>
+        <input id="minProfit" type="number" value="0" step="0.1">
+      </div>
+      <div>
+        <label for="stake">Valor total a distribuir</label>
+        <input id="stake" type="number" value="100" step="10">
+      </div>
+      <div>
+        <label for="interval">Atualizar a cada (segundos)</label>
+        <input id="interval" type="number" value="60" min="15" step="5">
+      </div>
+    </div>
+    <div style="margin-top: 14px; display:flex; gap:10px; align-items:center;">
+      <button id="loadSports">Carregar esportes</button>
+      <button id="toggle">Iniciar monitoramento</button>
+    </div>
+    <div id="status">
+      <span>Status: <b id="statusText">parado</b></span>
+      <span>Última checagem: <b id="lastCheck">—</b></span>
+      <span>Eventos verificados: <b id="eventsChecked">—</b></span>
+      <span>Requisições restantes na API: <b id="requestsLeft">—</b></span>
+    </div>
+  </div>
+
+  <div class="panel">
+    <table id="resultsTable">
+      <thead>
+        <tr>
+          <th>Evento</th>
+          <th>Início</th>
+          <th>Lucro</th>
+          <th>Pernas (casa / odd / stake)</th>
+          <th>Retorno garantido</th>
+        </tr>
+      </thead>
+      <tbody id="resultsBody">
+        <tr><td colspan="5" class="empty">Nenhuma checagem ainda.</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+<script>
+(function () {
+  const $ = (id) => document.getElementById(id);
+  let timer = null;
+  let running = false;
+
+  $('loadSports').addEventListener('click', loadSports);
+  $('toggle').addEventListener('click', toggleMonitoring);
+
+  async function loadSports() {
+    const apiKey = $('apiKey').value.trim();
+    if (!apiKey) { alert('Informe sua API key primeiro.'); return; }
+    try {
+      const res = await fetch(`/api/sports?apiKey=${encodeURIComponent(apiKey)}`);
+      const data = await res.json();
+      if (!res.ok) { alert('Erro: ' + (data.error || res.statusText)); return; }
+      const select = $('sport');
+      select.innerHTML = '<option value="upcoming">Todos os próximos jogos</option>';
+      data
+        .filter((s) => s.active)
+        .forEach((s) => {
+          const opt = document.createElement('option');
+          opt.value = s.key;
+          opt.textContent = `${s.group} — ${s.title}`;
+          select.appendChild(opt);
+        });
+    } catch (err) {
+      alert('Falha ao carregar esportes: ' + err.message);
+    }
+  }
+
+  function toggleMonitoring() {
+    running ? stop() : start();
+  }
+
+  function start() {
+    const apiKey = $('apiKey').value.trim();
+    if (!apiKey) { alert('Informe sua API key primeiro.'); return; }
+    running = true;
+    $('toggle').textContent = 'Parar monitoramento';
+    $('toggle').classList.add('stop');
+    $('statusText').textContent = 'monitorando';
+    checkArbitrage();
+    const seconds = Math.max(15, Number($('interval').value) || 60);
+    timer = setInterval(checkArbitrage, seconds * 1000);
+  }
+
+  function stop() {
+    running = false;
+    clearInterval(timer);
+    $('toggle').textContent = 'Iniciar monitoramento';
+    $('toggle').classList.remove('stop');
+    $('statusText').textContent = 'parado';
+  }
+
+  async function checkArbitrage() {
+    const apiKey = $('apiKey').value.trim();
+    const sport = $('sport').value;
+    const regions = $('regions').value;
+    const minProfit = $('minProfit').value;
+    const stake = $('stake').value;
+
+    const params = new URLSearchParams({
+      apiKey, sport, regions, minProfit, stake,
+    });
+
+    try {
+      const res = await fetch(`/api/arbitrage?${params.toString()}`);
+      const data = await res.json();
+      if (!res.ok) {
+        renderError(data.error || res.statusText);
+        return;
+      }
+      renderResults(data);
+    } catch (err) {
+      renderError(err.message);
+    }
+  }
+
+  function renderError(message) {
+    $('resultsBody').innerHTML = `<tr><td colspan="5" class="error">Erro: ${escapeHtml(message)}</td></tr>`;
+  }
+
+  function renderResults(data) {
+    $('lastCheck').textContent = new Date(data.checked_at * 1000).toLocaleTimeString('pt-BR');
+    $('eventsChecked').textContent = data.events_checked;
+    $('requestsLeft').textContent = data.requests_remaining ?? '—';
+
+    const body = $('resultsBody');
+    if (!data.opportunities.length) {
+      body.innerHTML = '<tr><td colspan="5" class="empty">Nenhuma arbitragem encontrada nesta checagem.</td></tr>';
+      return;
+    }
+
+    body.innerHTML = data.opportunities.map((opp) => `
+      <tr>
+        <td>${escapeHtml(opp.home_team)} vs ${escapeHtml(opp.away_team)}</td>
+        <td>${new Date(opp.commence_time).toLocaleString('pt-BR')}</td>
+        <td class="profit">+${opp.profit_pct.toFixed(2)}%</td>
+        <td class="legs">
+          ${opp.legs.map((l) => `<div>${escapeHtml(l.outcome)} — ${escapeHtml(l.bookmaker)} @ ${l.odds} — apostar ${l.stake}</div>`).join('')}
+        </td>
+        <td>${opp.guaranteed_return}</td>
+      </tr>
+    `).join('');
+  }
+
+  function escapeHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = String(str);
+    return div.innerHTML;
+  }
+})();
+</script>
+</body>
+</html>

@@ -29,45 +29,48 @@ function distribute(pool, teams, teamSize, startIndex) {
 }
 
 /**
- * Draws balanced teams from a player list.
- * Goalkeepers are assigned one per team and never enter the outfield draw.
- * Seeded players ("cabeças de chave") are spread one per team before the
- * rest of the pool is shuffled in, so the strongest players don't stack.
+ * Draws balanced teams from a player list. Seeded players ("cabeças de
+ * chave") are spread one per team before the rest of the pool is shuffled
+ * in, so the strongest players don't stack on one side.
  *
- * @param {{name: string, isGoalkeeper?: boolean, isSeed?: boolean}[]} players
+ * The number of teams is derived from how many players fit per team
+ * (ceil(total / teamSize)), so a game can land on 2, 3 or 4 teams and the
+ * shortest one just ends up with fewer players instead of anyone sitting
+ * out as a "reserve".
+ *
+ * @param {{name: string, isSeed?: boolean}[]} players
  * @param {{teamSize?: number, numberOfTeams?: number}} [options]
  */
 function drawTeams(players, options = {}) {
+  if (players.length === 0) {
+    throw new Error("Adicione jogadores antes de sortear.");
+  }
+
   const teamSize = options.teamSize ?? 5;
   if (!Number.isInteger(teamSize) || teamSize < 1) {
-    throw new Error("teamSize must be a positive integer");
+    throw new Error("O número de jogadores por time precisa ser um inteiro positivo.");
   }
 
-  const goalkeepers = players.filter((p) => p.isGoalkeeper);
-  const outfield = players.filter((p) => !p.isGoalkeeper);
-
-  const numberOfTeams = options.numberOfTeams ?? (goalkeepers.length || Math.ceil(outfield.length / teamSize) || 1);
+  const numberOfTeams = options.numberOfTeams ?? Math.max(1, Math.ceil(players.length / teamSize));
   if (!Number.isInteger(numberOfTeams) || numberOfTeams < 1) {
-    throw new Error("numberOfTeams must be a positive integer");
+    throw new Error("O número de times precisa ser um inteiro positivo.");
   }
 
-  const shuffledGoalkeepers = shuffle(goalkeepers);
-  const teamGoalkeepers = shuffledGoalkeepers.slice(0, numberOfTeams);
-  const extraGoalkeepers = shuffledGoalkeepers.slice(numberOfTeams);
-
-  const seeds = shuffle(outfield.filter((p) => p.isSeed));
-  const rest = shuffle(outfield.filter((p) => !p.isSeed));
+  const seeds = shuffle(players.filter((p) => p.isSeed));
+  const rest = shuffle(players.filter((p) => !p.isSeed));
 
   const teams = Array.from({ length: numberOfTeams }, () => []);
   const seedResult = distribute(seeds, teams, teamSize, 0);
-  const restResult = distribute([...extraGoalkeepers, ...rest], teams, teamSize, seedResult.nextIndex);
+  const restResult = distribute(rest, teams, teamSize, seedResult.nextIndex);
+
+  // Largest team first, so a short-handed team naturally reads as "the last one".
+  const orderedTeams = teams
+    .slice()
+    .sort((a, b) => b.length - a.length)
+    .map((teamPlayers, i) => ({ name: `Time ${i + 1}`, players: teamPlayers }));
 
   return {
-    teams: teams.map((teamPlayers, i) => ({
-      name: `Time ${i + 1}`,
-      goalkeeper: teamGoalkeepers[i] ?? null,
-      players: teamPlayers,
-    })),
+    teams: orderedTeams,
     reserves: [...seedResult.reserves, ...restResult.reserves],
   };
 }

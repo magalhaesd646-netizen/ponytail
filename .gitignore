@@ -24,3 +24,6 @@ ponytail-*.gif
 
 # agentic benchmark workspaces (agent output, kept locally for inspection)
 benchmarks/agentic/runs/
+
+# transient bundle for publishing whatsapp-team-draw as an Artifact
+whatsapp-team-draw/public/artifact.html

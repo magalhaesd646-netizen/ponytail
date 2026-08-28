@@ -4,25 +4,45 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Sorteio de Times</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Anton&family=Manrope:wght@500;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <main>
-    <h1>Sorteio de Times</h1>
+    <header class="scoreboard">
+      <p class="scoreboard__eyebrow">Pelada de sábado</p>
+      <h1 class="scoreboard__title">Sorteio de Times</h1>
+    </header>
 
-    <label for="paste-area">Cole aqui a lista de jogadores do grupo (um nome por linha):</label>
-    <textarea id="paste-area" rows="8" placeholder="1. Fulano&#10;2. Beltrano&#10;3. Ciclano"></textarea>
-    <button id="load-btn">Carregar lista</button>
+    <section class="card" id="paste-section">
+      <label for="paste-area">Cole a lista de jogadores do grupo</label>
+      <textarea id="paste-area" rows="7" placeholder="1. Fulano&#10;2. Beltrano&#10;3. Ciclano"></textarea>
+      <button id="load-btn" class="btn btn--pitch">Carregar lista</button>
+    </section>
 
-    <ul id="player-list"></ul>
+    <section class="card" id="roster-section" hidden>
+      <div class="roster-header">
+        <h2>Escalação</h2>
+        <p class="roster-hint">Toque na estrela dos 3 ou 4 melhores — eles serão espalhados entre os times.</p>
+      </div>
+      <ol id="player-list" class="roster"></ol>
 
-    <div class="draw-controls" id="draw-controls" hidden>
-      <label>Jogadores de linha por time: <input id="team-size" type="number" value="5" min="1"></label>
-      <button id="draw-btn">Sortear times</button>
-      <button id="clear-btn" class="secondary">Recomeçar</button>
-    </div>
+      <div class="draw-bar">
+        <label class="team-size">
+          Por time
+          <input id="team-size" type="number" value="5" min="1" inputmode="numeric">
+        </label>
+        <button id="draw-btn" class="btn btn--accent">Sortear times</button>
+      </div>
+      <button id="clear-btn" class="btn btn--ghost">Recomeçar</button>
+    </section>
 
-    <div id="draw-result"></div>
+    <section id="result-section" hidden>
+      <div id="draw-result" class="teams"></div>
+      <button id="share-btn" class="btn btn--accent btn--share">Compartilhar resultado</button>
+    </section>
   </main>
   <script src="../src/teamDraw.js"></script>
   <script src="app.js"></script>

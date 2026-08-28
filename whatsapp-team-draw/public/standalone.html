@@ -5,98 +5,385 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Sorteio de Times</title>
   <style>
-body {
-  font-family: system-ui, sans-serif;
-  max-width: 480px;
-  margin: 2rem auto;
-  padding: 0 1rem;
-  color: #222;
+:root {
+  --bg: #f5f7f1;
+  --surface: #ffffff;
+  --pitch: #1b6b3a;
+  --pitch-deep: #0e4526;
+  --accent: #ffb100;
+  --accent-ink: #3a2600;
+  --ink: #16241c;
+  --ink-soft: #4b5c50;
+  --line: #dce3d7;
+  --team-1: #1b6b3a;
+  --team-2: #c1272d;
+  --team-3: #1e5aa8;
+  --team-4: #7a4fa3;
+  --team-5: #b5892b;
+  --team-6: #2b8f8f;
+  --shadow: 0 10px 24px -12px rgba(14, 69, 38, 0.35);
 }
 
-h1 {
-  font-size: 1.4rem;
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0b1710;
+    --surface: #14241a;
+    --pitch: #3fcb7a;
+    --pitch-deep: #eaf3ec;
+    --accent: #ffc94d;
+    --accent-ink: #2b1c00;
+    --ink: #eaf3ec;
+    --ink-soft: #a7bcac;
+    --line: #24382c;
+    --team-1: #3fcb7a;
+    --team-2: #ff6b6b;
+    --team-3: #5b9bd9;
+    --team-4: #b48dde;
+    --team-5: #e0b64f;
+    --team-6: #4fd1d1;
+    --shadow: 0 10px 24px -12px rgba(0, 0, 0, 0.6);
+  }
+}
+
+:root[data-theme="dark"] {
+  --bg: #0b1710;
+  --surface: #14241a;
+  --pitch: #3fcb7a;
+  --pitch-deep: #eaf3ec;
+  --accent: #ffc94d;
+  --accent-ink: #2b1c00;
+  --ink: #eaf3ec;
+  --ink-soft: #a7bcac;
+  --line: #24382c;
+  --team-1: #3fcb7a;
+  --team-2: #ff6b6b;
+  --team-3: #5b9bd9;
+  --team-4: #b48dde;
+  --team-5: #e0b64f;
+  --team-6: #4fd1d1;
+  --shadow: 0 10px 24px -12px rgba(0, 0, 0, 0.6);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: "Manrope", system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+main {
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 1.5rem 1.25rem 3rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.scoreboard {
+  text-align: center;
+  padding: 1.5rem 1rem;
+  border-radius: 18px;
+  background: linear-gradient(160deg, var(--pitch) 0%, var(--pitch-deep) 100%);
+  box-shadow: var(--shadow);
+}
+
+.scoreboard__eyebrow {
+  margin: 0 0 0.2rem;
+  font-weight: 700;
+  font-size: 0.8rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(255, 255, 255, 0.75);
+}
+
+.scoreboard__title {
+  margin: 0;
+  font-family: "Anton", "Manrope", system-ui, sans-serif;
+  font-weight: 400;
+  font-size: clamp(2rem, 8vw, 2.6rem);
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: #fff;
+  text-wrap: balance;
+}
+
+.card {
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
 }
 
 label {
-  display: block;
-  margin-bottom: 0.3rem;
+  font-weight: 700;
+  font-size: 0.95rem;
 }
 
 textarea {
   width: 100%;
   font: inherit;
-  padding: 0.5rem;
-  box-sizing: border-box;
-  margin-bottom: 0.5rem;
+  color: inherit;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  padding: 0.75rem;
+  resize: vertical;
 }
 
-input, button, textarea {
+textarea:focus-visible,
+input:focus-visible,
+button:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 2px;
+}
+
+.btn {
+  border: none;
+  border-radius: 999px;
+  padding: 0.85rem 1.5rem;
+  font: inherit;
+  font-weight: 800;
   font-size: 1rem;
+  cursor: pointer;
+  transition: transform 0.1s ease;
+}
+
+.btn:active {
+  transform: scale(0.97);
+}
+
+.btn--pitch {
+  background: var(--pitch);
+  color: #fff;
+}
+
+.btn--accent {
+  background: var(--accent);
+  color: var(--accent-ink);
+}
+
+.btn--ghost {
+  background: transparent;
+  color: var(--ink-soft);
   padding: 0.5rem;
 }
 
-#player-list {
-  list-style: none;
-  padding: 0;
+.btn--share {
+  width: 100%;
 }
 
-#player-list li {
+.roster-header h2 {
+  margin: 0 0 0.15rem;
+  font-family: "Anton", "Manrope", system-ui, sans-serif;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  font-size: 1.4rem;
+  color: var(--pitch-deep);
+}
+
+.roster-hint {
+  margin: 0;
+  color: var(--ink-soft);
+  font-size: 0.9rem;
+}
+
+.roster {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.roster li {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0.6rem;
+  border-radius: 10px;
+  background: var(--bg);
+}
+
+.roster .number {
+  font-variant-numeric: tabular-nums;
+  font-weight: 800;
+  color: var(--ink-soft);
+  width: 1.6rem;
+  text-align: right;
+}
+
+.roster .name {
+  flex: 1;
+  font-weight: 700;
+}
+
+.star-toggle {
+  border: none;
+  background: transparent;
+  font-size: 1.4rem;
+  line-height: 1;
+  padding: 0.25rem;
+  cursor: pointer;
+  filter: grayscale(1) opacity(0.4);
+}
+
+.star-toggle[aria-pressed="true"] {
+  filter: none;
+}
+
+.draw-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.25rem;
+}
+
+.team-size {
   display: flex;
   align-items: center;
   gap: 0.5rem;
-  padding: 0.4rem 0;
-  border-bottom: 1px solid #eee;
+  font-size: 0.9rem;
+  color: var(--ink-soft);
 }
 
-#player-list li .name {
+.team-size input {
+  width: 3.5rem;
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+  padding: 0.5rem;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: var(--surface);
+  color: var(--ink);
+}
+
+#draw-btn {
   flex: 1;
 }
 
-.draw-controls {
+#result-section {
   display: flex;
   flex-direction: column;
-  gap: 0.5rem;
-  margin: 1.5rem 0;
+  gap: 1rem;
 }
 
-button.secondary {
-  background: #eee;
-}
-
-#draw-result {
-  white-space: pre-wrap;
-  background: #f6f6f6;
-  padding: 1rem;
-  border-radius: 6px;
+.teams {
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
 }
 
 .team {
-  margin-bottom: 1rem;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  animation: reveal 0.35s ease both;
 }
 
-.team h3 {
-  margin: 0 0 0.3rem;
+.team + .team {
+  animation-delay: 0.08s;
+}
+
+.team__stripe {
+  height: 6px;
+}
+
+.team__body {
+  padding: 1rem 1.1rem;
+}
+
+.team__body h3 {
+  margin: 0 0 0.5rem;
+  font-family: "Anton", "Manrope", system-ui, sans-serif;
+  font-weight: 400;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  font-size: 1.2rem;
+}
+
+.team__body ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.team__body li {
+  font-weight: 700;
+}
+
+.team__body li .seed-mark {
+  color: var(--accent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .team {
+    animation: none;
+  }
+}
+
+@keyframes reveal {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
   </style>
 </head>
 <body>
 <main>
-    <h1>Sorteio de Times</h1>
+    <header class="scoreboard">
+      <p class="scoreboard__eyebrow">Pelada de sábado</p>
+      <h1 class="scoreboard__title">Sorteio de Times</h1>
+    </header>
 
-    <label for="paste-area">Cole aqui a lista de jogadores do grupo (um nome por linha):</label>
-    <textarea id="paste-area" rows="8" placeholder="1. Fulano&#10;2. Beltrano&#10;3. Ciclano"></textarea>
-    <button id="load-btn">Carregar lista</button>
+    <section class="card" id="paste-section">
+      <label for="paste-area">Cole a lista de jogadores do grupo</label>
+      <textarea id="paste-area" rows="7" placeholder="1. Fulano&#10;2. Beltrano&#10;3. Ciclano"></textarea>
+      <button id="load-btn" class="btn btn--pitch">Carregar lista</button>
+    </section>
 
-    <ul id="player-list"></ul>
+    <section class="card" id="roster-section" hidden>
+      <div class="roster-header">
+        <h2>Escalação</h2>
+        <p class="roster-hint">Toque na estrela dos 3 ou 4 melhores — eles serão espalhados entre os times.</p>
+      </div>
+      <ol id="player-list" class="roster"></ol>
 
-    <div class="draw-controls" id="draw-controls" hidden>
-      <label>Jogadores de linha por time: <input id="team-size" type="number" value="5" min="1"></label>
-      <button id="draw-btn">Sortear times</button>
-      <button id="clear-btn" class="secondary">Recomeçar</button>
-    </div>
+      <div class="draw-bar">
+        <label class="team-size">
+          Por time
+          <input id="team-size" type="number" value="5" min="1" inputmode="numeric">
+        </label>
+        <button id="draw-btn" class="btn btn--accent">Sortear times</button>
+      </div>
+      <button id="clear-btn" class="btn btn--ghost">Recomeçar</button>
+    </section>
 
-    <div id="draw-result"></div>
+    <section id="result-section" hidden>
+      <div id="draw-result" class="teams"></div>
+      <button id="share-btn" class="btn btn--accent btn--share">Compartilhar resultado</button>
+    </section>
   </main>
 <script>
 function shuffle(list) {
@@ -130,45 +417,48 @@ function distribute(pool, teams, teamSize, startIndex) {
 }
 
 /**
- * Draws balanced teams from a player list.
- * Goalkeepers are assigned one per team and never enter the outfield draw.
- * Seeded players ("cabeças de chave") are spread one per team before the
- * rest of the pool is shuffled in, so the strongest players don't stack.
+ * Draws balanced teams from a player list. Seeded players ("cabeças de
+ * chave") are spread one per team before the rest of the pool is shuffled
+ * in, so the strongest players don't stack on one side.
  *
- * @param {{name: string, isGoalkeeper?: boolean, isSeed?: boolean}[]} players
+ * The number of teams is derived from how many players fit per team
+ * (ceil(total / teamSize)), so a game can land on 2, 3 or 4 teams and the
+ * shortest one just ends up with fewer players instead of anyone sitting
+ * out as a "reserve".
+ *
+ * @param {{name: string, isSeed?: boolean}[]} players
  * @param {{teamSize?: number, numberOfTeams?: number}} [options]
  */
 function drawTeams(players, options = {}) {
+  if (players.length === 0) {
+    throw new Error("Adicione jogadores antes de sortear.");
+  }
+
   const teamSize = options.teamSize ?? 5;
   if (!Number.isInteger(teamSize) || teamSize < 1) {
-    throw new Error("teamSize must be a positive integer");
+    throw new Error("O número de jogadores por time precisa ser um inteiro positivo.");
   }
 
-  const goalkeepers = players.filter((p) => p.isGoalkeeper);
-  const outfield = players.filter((p) => !p.isGoalkeeper);
-
-  const numberOfTeams = options.numberOfTeams ?? (goalkeepers.length || Math.ceil(outfield.length / teamSize) || 1);
+  const numberOfTeams = options.numberOfTeams ?? Math.max(1, Math.ceil(players.length / teamSize));
   if (!Number.isInteger(numberOfTeams) || numberOfTeams < 1) {
-    throw new Error("numberOfTeams must be a positive integer");
+    throw new Error("O número de times precisa ser um inteiro positivo.");
   }
 
-  const shuffledGoalkeepers = shuffle(goalkeepers);
-  const teamGoalkeepers = shuffledGoalkeepers.slice(0, numberOfTeams);
-  const extraGoalkeepers = shuffledGoalkeepers.slice(numberOfTeams);
-
-  const seeds = shuffle(outfield.filter((p) => p.isSeed));
-  const rest = shuffle(outfield.filter((p) => !p.isSeed));
+  const seeds = shuffle(players.filter((p) => p.isSeed));
+  const rest = shuffle(players.filter((p) => !p.isSeed));
 
   const teams = Array.from({ length: numberOfTeams }, () => []);
   const seedResult = distribute(seeds, teams, teamSize, 0);
-  const restResult = distribute([...extraGoalkeepers, ...rest], teams, teamSize, seedResult.nextIndex);
+  const restResult = distribute(rest, teams, teamSize, seedResult.nextIndex);
+
+  // Largest team first, so a short-handed team naturally reads as "the last one".
+  const orderedTeams = teams
+    .slice()
+    .sort((a, b) => b.length - a.length)
+    .map((teamPlayers, i) => ({ name: `Time ${i + 1}`, players: teamPlayers }));
 
   return {
-    teams: teams.map((teamPlayers, i) => ({
-      name: `Time ${i + 1}`,
-      goalkeeper: teamGoalkeepers[i] ?? null,
-      players: teamPlayers,
-    })),
+    teams: orderedTeams,
     reserves: [...seedResult.reserves, ...restResult.reserves],
   };
 }
@@ -183,8 +473,9 @@ if (typeof module !== "undefined" && module.exports) {
 <script>
 let players = [];
 
+const rosterSection = document.getElementById("roster-section");
+const resultSection = document.getElementById("result-section");
 const playerList = document.getElementById("player-list");
-const drawControls = document.getElementById("draw-controls");
 const drawResult = document.getElementById("draw-result");
 
 function parsePlayers(text) {
@@ -202,75 +493,92 @@ function parsePlayers(text) {
     .filter(Boolean);
 }
 
-function renderPlayers() {
+function renderRoster() {
   playerList.innerHTML = "";
   players.forEach((player, index) => {
     const li = document.createElement("li");
+
+    const number = document.createElement("span");
+    number.className = "number";
+    number.textContent = index + 1;
+    li.appendChild(number);
 
     const name = document.createElement("span");
     name.className = "name";
     name.textContent = player.name;
     li.appendChild(name);
 
-    li.appendChild(makeToggle("🧤 Goleiro", player.isGoalkeeper, (checked) => {
-      players[index].isGoalkeeper = checked;
-    }));
-    li.appendChild(makeToggle("⭐ Cabeça de chave", player.isSeed, (checked) => {
-      players[index].isSeed = checked;
-    }));
+    const star = document.createElement("button");
+    star.type = "button";
+    star.className = "star-toggle";
+    star.textContent = "⭐";
+    star.setAttribute("aria-pressed", String(player.isSeed));
+    star.setAttribute("aria-label", `Marcar ${player.name} como cabeça de chave`);
+    star.addEventListener("click", () => {
+      player.isSeed = !player.isSeed;
+      star.setAttribute("aria-pressed", String(player.isSeed));
+    });
+    li.appendChild(star);
 
     playerList.appendChild(li);
   });
 }
 
-function makeToggle(label, checked, onChange) {
-  const wrapper = document.createElement("label");
-  const checkbox = document.createElement("input");
-  checkbox.type = "checkbox";
-  checkbox.checked = checked;
-  checkbox.onchange = () => onChange(checkbox.checked);
-  wrapper.appendChild(checkbox);
-  wrapper.appendChild(document.createTextNode(label));
-  return wrapper;
+function formatShareText(draw) {
+  const lines = ["⚽ Sorteio de Times"];
+  for (const team of draw.teams) {
+    lines.push("", `${team.name.toUpperCase()}`, ...team.players.map((p) => `- ${p.name}${p.isSeed ? " ⭐" : ""}`));
+  }
+  return lines.join("\n");
 }
 
 function renderDraw(draw) {
   drawResult.innerHTML = "";
-  for (const team of draw.teams) {
-    const div = document.createElement("div");
-    div.className = "team";
+  draw.teams.forEach((team, i) => {
+    const card = document.createElement("article");
+    card.className = "team";
+
+    const stripe = document.createElement("div");
+    stripe.className = "team__stripe";
+    stripe.style.background = `var(--team-${(i % 6) + 1})`;
+    card.appendChild(stripe);
+
+    const body = document.createElement("div");
+    body.className = "team__body";
+
     const title = document.createElement("h3");
-    title.textContent = `${team.name} — 🧤 ${team.goalkeeper ? team.goalkeeper.name : "(sem goleiro fixo)"}`;
-    div.appendChild(title);
+    title.textContent = `${team.name} · ${team.players.length}`;
+    body.appendChild(title);
+
     const ul = document.createElement("ul");
     for (const player of team.players) {
       const li = document.createElement("li");
-      li.textContent = `${player.name}${player.isSeed ? " ⭐" : ""}`;
-      ul.appendChild(li);
-    }
-    div.appendChild(ul);
-    drawResult.appendChild(div);
-  }
-  if (draw.reserves.length) {
-    const title = document.createElement("h3");
-    title.textContent = "Reservas";
-    drawResult.appendChild(title);
-    const ul = document.createElement("ul");
-    for (const player of draw.reserves) {
-      const li = document.createElement("li");
       li.textContent = player.name;
+      if (player.isSeed) {
+        const mark = document.createElement("span");
+        mark.className = "seed-mark";
+        mark.textContent = " ⭐";
+        li.appendChild(mark);
+      }
       ul.appendChild(li);
     }
-    drawResult.appendChild(ul);
-  }
+    body.appendChild(ul);
+
+    card.appendChild(body);
+    drawResult.appendChild(card);
+  });
+
+  resultSection.hidden = false;
+  resultSection.dataset.shareText = formatShareText(draw);
+  resultSection.scrollIntoView({ behavior: "smooth", block: "start" });
 }
 
 document.getElementById("load-btn").addEventListener("click", () => {
   const names = parsePlayers(document.getElementById("paste-area").value);
-  players = names.map((name) => ({ name, isGoalkeeper: false, isSeed: false }));
-  drawResult.innerHTML = "";
-  drawControls.hidden = players.length === 0;
-  renderPlayers();
+  players = names.map((name) => ({ name, isSeed: false }));
+  resultSection.hidden = true;
+  rosterSection.hidden = players.length === 0;
+  renderRoster();
 });
 
 document.getElementById("draw-btn").addEventListener("click", () => {
@@ -285,9 +593,28 @@ document.getElementById("draw-btn").addEventListener("click", () => {
 document.getElementById("clear-btn").addEventListener("click", () => {
   players = [];
   document.getElementById("paste-area").value = "";
-  drawControls.hidden = true;
+  rosterSection.hidden = true;
+  resultSection.hidden = true;
   playerList.innerHTML = "";
   drawResult.innerHTML = "";
+});
+
+document.getElementById("share-btn").addEventListener("click", async () => {
+  const text = resultSection.dataset.shareText || "";
+  if (navigator.share) {
+    try {
+      await navigator.share({ title: "Sorteio de Times", text });
+    } catch (err) {
+      if (err.name !== "AbortError") alert("Não foi possível compartilhar.");
+    }
+    return;
+  }
+  try {
+    await navigator.clipboard.writeText(text);
+    alert("Texto copiado! Cole no grupo do WhatsApp.");
+  } catch (err) {
+    alert("Não foi possível copiar. Copie manualmente:\n\n" + text);
+  }
 });
 
 </script>

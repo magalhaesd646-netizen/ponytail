@@ -21,5 +21,5 @@ ${appJs}
 </script>
 `;
 
-fs.writeFileSync(path.join(__dirname, "..", "public", "artifact.html"), fragment);
-console.log("Gerado public/artifact.html");
+fs.writeFileSync(path.join(__dirname, "..", "public", "sorteio-de-times.html"), fragment);
+console.log("Gerado public/sorteio-de-times.html");

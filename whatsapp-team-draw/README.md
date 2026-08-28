@@ -45,5 +45,5 @@ Depois de editar qualquer um deles, regenere as versões empacotadas:
 
 ```bash
 node scripts/build-standalone.js   # public/standalone.html (arquivo único p/ download)
-node scripts/build-artifact.js     # public/sorteio-de-times.html (fonte do link publicado)
+node scripts/build-artifact.js     # public/Sorteio de Times.html (fonte do link publicado)
 ```

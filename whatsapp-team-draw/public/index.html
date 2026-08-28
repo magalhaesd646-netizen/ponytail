@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sorteio de Times</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <main>
+    <h1>Sorteio de Times</h1>
+
+    <form id="join-form">
+      <input id="name-input" type="text" placeholder="Seu nome" maxlength="40" required>
+      <button type="submit">Entrar</button>
+    </form>
+
+    <ul id="player-list"></ul>
+
+    <div class="draw-controls">
+      <label>Jogadores de linha por time: <input id="team-size" type="number" value="5" min="1"></label>
+      <button id="draw-btn">Sortear times</button>
+      <button id="clear-btn" class="secondary">Limpar lista</button>
+    </div>
+
+    <div id="draw-result"></div>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>

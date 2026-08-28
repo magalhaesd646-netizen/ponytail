@@ -1,25 +1,57 @@
 # whatsapp-team-draw
 
-Bot de WhatsApp para sortear times de futebol/pelada a partir da lista de
-jogadores de um grupo. Goleiro é fixo (não entra no sorteio) e os cabeças de
-chave são espalhados um por time, pra evitar time turbinado.
+Ferramenta para sortear times de futebol/pelada. Goleiro é fixo (não entra no
+sorteio) e os cabeças de chave são espalhados um por time, pra evitar time
+turbinado. Duas formas de usar:
 
-Usa [whatsapp-web.js](https://wwebjs.dev/), que controla o WhatsApp Web do seu
-próprio número via Chromium headless. Não é a API oficial da Meta — serve bem
-para uso pessoal/grupo de amigos, mas não é indicado para envio em massa.
+- **App web local** (`npm start`) — cada jogador se cadastra sozinho abrindo
+  um link, sem precisar digitar comandos.
+- **Bot de WhatsApp** (`npm run bot`) — cadastro via comandos numa conversa do
+  WhatsApp.
 
-## Uso
+## App web local
 
 ```bash
 npm install
 npm start
 ```
 
+O terminal mostra os links para compartilhar, por exemplo:
+
+```
+Servidor rodando na porta 3000.
+Compartilhe um destes links com o pessoal (mesma rede Wi-Fi):
+  http://192.168.0.12:3000
+  http://localhost:3000 (só nesta máquina)
+```
+
+Mande o link `http://SEU-IP:3000` no grupo. **Só funciona para quem estiver na
+mesma rede Wi-Fi/local que o computador rodando o servidor** — não é acessível
+pela internet. Se precisar que alguém de fora da rede acesse, exponha a porta
+com uma ferramenta de túnel (ex: `ngrok http 3000`) e mande o link que ela
+gerar.
+
+Cada pessoa que abre o link:
+1. Digita o nome e clica em Entrar.
+2. Marca 🧤 se for goleiro fixo ou ⭐ se for cabeça de chave (só consegue
+   editar a própria linha).
+3. Qualquer um com o link pode clicar em "Sortear times" quando a lista
+   estiver completa — não há dono/admin da lista, é um espaço compartilhado
+   simples para gente de confiança.
+
+## Bot de WhatsApp
+
+Usa [whatsapp-web.js](https://wwebjs.dev/), que controla o WhatsApp Web do seu
+próprio número via Chromium headless. Não é a API oficial da Meta — serve bem
+para uso pessoal/grupo de amigos, mas não é indicado para envio em massa.
+
+```bash
+npm run bot
+```
+
 Escaneie o QR code exibido no terminal com o WhatsApp do celular (Aparelhos
 conectados → Conectar um aparelho). O bot passa a responder aos comandos em
 qualquer conversa (grupo ou individual) onde estiver presente.
-
-## Comandos
 
 | Comando | O que faz |
 |---|---|
@@ -33,8 +65,8 @@ qualquer conversa (grupo ou individual) onde estiver presente.
 
 ## Como funciona o sorteio
 
-1. Cada goleiro marcado com `!goleiro` é distribuído um por time (sorteado
-   entre os times, não entra na disputa por vaga de linha).
+1. Cada goleiro marcado é distribuído um por time (sorteado entre os times,
+   não entra na disputa por vaga de linha).
 2. Os cabeças de chave são embaralhados e espalhados um por time antes do
    resto da lista, pra evitar que dois "cabeças" caiam juntos.
 3. O restante dos jogadores é embaralhado e distribuído até completar o
@@ -43,11 +75,13 @@ qualquer conversa (grupo ou individual) onde estiver presente.
    reservas.
 
 A lógica pura do sorteio está em `src/teamDraw.js` e pode ser testada sem
-WhatsApp: `npm test`.
+WhatsApp nem navegador: `npm test`.
 
 ## Limitações conhecidas
 
-- A lista de jogadores fica em memória: reiniciar o bot zera as listas em
-  aberto (ok para o uso pretendido — coletar jogadores de uma pelada por vez).
-- Não há checagem de admin do grupo para `!limpar`; qualquer participante do
-  grupo pode zerar a lista.
+- A lista de jogadores fica em memória (tanto no app web quanto no bot):
+  reiniciar zera as listas em aberto — ok para o uso pretendido, coletar
+  jogadores de uma pelada por vez.
+- Nenhum dos dois modos tem autenticação: qualquer pessoa com o link (app
+  web) ou no grupo (bot) pode editar a lista e zerá-la. Pensado para uso
+  entre amigos de confiança, não para grupos abertos.

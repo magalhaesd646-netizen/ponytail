@@ -1,0 +1,69 @@
+body {
+  font-family: system-ui, sans-serif;
+  max-width: 480px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+  color: #222;
+}
+
+h1 {
+  font-size: 1.4rem;
+}
+
+#join-form {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+#join-form input {
+  flex: 1;
+}
+
+input, button {
+  font-size: 1rem;
+  padding: 0.5rem;
+}
+
+#player-list {
+  list-style: none;
+  padding: 0;
+}
+
+#player-list li {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0;
+  border-bottom: 1px solid #eee;
+}
+
+#player-list li .name {
+  flex: 1;
+}
+
+.draw-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: 1.5rem 0;
+}
+
+button.secondary {
+  background: #eee;
+}
+
+#draw-result {
+  white-space: pre-wrap;
+  background: #f6f6f6;
+  padding: 1rem;
+  border-radius: 6px;
+}
+
+.team {
+  margin-bottom: 1rem;
+}
+
+.team h3 {
+  margin: 0 0 0.3rem;
+}

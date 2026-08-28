@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Jogo da Cobrinha</title>
+<style>
+  :root {
+    --bg: #0f172a;
+    --board-bg: #1e293b;
+    --grid: #26334d;
+    --snake-head: #4ade80;
+    --snake-body: #22c55e;
+    --food: #f87171;
+    --text: #e2e8f0;
+    --accent: #38bdf8;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', Roboto, sans-serif;
+    gap: 12px;
+    padding: 16px;
+  }
+  h1 { margin: 0; font-size: 1.6rem; letter-spacing: 1px; }
+  #hud {
+    display: flex;
+    gap: 24px;
+    font-size: 1.1rem;
+  }
+  #hud span { color: var(--accent); font-weight: bold; }
+  #board {
+    background: var(--board-bg);
+    border: 4px solid var(--accent);
+    border-radius: 8px;
+    display: block;
+    image-rendering: pixelated;
+  }
+  #message {
+    min-height: 1.4em;
+    font-size: 1rem;
+    color: #fbbf24;
+    text-align: center;
+  }
+  #controls {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+  }
+  button {
+    background: var(--accent);
+    color: #0f172a;
+    border: none;
+    padding: 8px 20px;
+    border-radius: 6px;
+    font-weight: bold;
+    cursor: pointer;
+    font-size: 1rem;
+  }
+  button:hover { filter: brightness(1.1); }
+  #dpad {
+    display: grid;
+    grid-template-columns: repeat(3, 48px);
+    grid-template-rows: repeat(2, 48px);
+    gap: 4px;
+    margin-top: 8px;
+  }
+  #dpad button {
+    padding: 0;
+    font-size: 1.2rem;
+  }
+  .up { grid-column: 2; grid-row: 1; }
+  .left { grid-column: 1; grid-row: 2; }
+  .down { grid-column: 2; grid-row: 2; }
+  .right { grid-column: 3; grid-row: 2; }
+  small { color: #64748b; }
+</style>
+</head>
+<body>
+  <h1>🐍 Jogo da Cobrinha</h1>
+  <div id="hud">
+    <div>Pontos: <span id="score">0</span></div>
+    <div>Recorde: <span id="best">0</span></div>
+  </div>
+  <canvas id="board" width="400" height="400"></canvas>
+  <div id="message">Pressione uma seta para começar</div>
+  <div id="controls">
+    <button id="restart">Reiniciar</button>
+    <div id="dpad">
+      <button class="up" data-dir="up">▲</button>
+      <button class="left" data-dir="left">◀</button>
+      <button class="down" data-dir="down">▼</button>
+      <button class="right" data-dir="right">▶</button>
+    </div>
+  </div>
+  <small>Use as setas do teclado (ou WASD) para jogar</small>
+
+<script>
+(function () {
+  const canvas = document.getElementById('board');
+  const ctx = canvas.getContext('2d');
+  const scoreEl = document.getElementById('score');
+  const bestEl = document.getElementById('best');
+  const messageEl = document.getElementById('message');
+  const restartBtn = document.getElementById('restart');
+
+  const GRID_SIZE = 20;
+  const CELL = canvas.width / GRID_SIZE;
+  const SPEED_MS = 110;
+
+  let snake, direction, nextDirection, food, score, best, gameOver, running, loopId;
+
+  best = Number(localStorage.getItem('snake-best') || 0);
+  bestEl.textContent = best;
+
+  function resetState() {
+    snake = [
+      { x: 9, y: 10 },
+      { x: 8, y: 10 },
+      { x: 7, y: 10 },
+    ];
+    direction = 'right';
+    nextDirection = 'right';
+    score = 0;
+    gameOver = false;
+    scoreEl.textContent = score;
+    placeFood();
+    messageEl.textContent = 'Pressione uma seta para começar';
+  }
+
+  function placeFood() {
+    let pos;
+    do {
+      pos = {
+        x: Math.floor(Math.random() * GRID_SIZE),
+        y: Math.floor(Math.random() * GRID_SIZE),
+      };
+    } while (snake.some((s) => s.x === pos.x && s.y === pos.y));
+    food = pos;
+  }
+
+  function draw() {
+    ctx.fillStyle = '#1e293b';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    ctx.strokeStyle = '#26334d';
+    ctx.lineWidth = 1;
+    for (let i = 0; i <= GRID_SIZE; i++) {
+      ctx.beginPath();
+      ctx.moveTo(i * CELL, 0);
+      ctx.lineTo(i * CELL, canvas.height);
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(0, i * CELL);
+      ctx.lineTo(canvas.width, i * CELL);
+      ctx.stroke();
+    }
+
+    ctx.fillStyle = '#f87171';
+    roundRect(food.x * CELL, food.y * CELL, CELL, CELL, 5);
+    ctx.fill();
+
+    snake.forEach((seg, idx) => {
+      ctx.fillStyle = idx === 0 ? '#4ade80' : '#22c55e';
+      roundRect(seg.x * CELL + 1, seg.y * CELL + 1, CELL - 2, CELL - 2, 4);
+      ctx.fill();
+    });
+  }
+
+  function roundRect(x, y, w, h, r) {
+    ctx.beginPath();
+    ctx.moveTo(x + r, y);
+    ctx.arcTo(x + w, y, x + w, y + h, r);
+    ctx.arcTo(x + w, y + h, x, y + h, r);
+    ctx.arcTo(x, y + h, x, y, r);
+    ctx.arcTo(x, y, x + w, y, r);
+    ctx.closePath();
+  }
+
+  function step() {
+    if (gameOver) return;
+
+    if (!isOpposite(direction, nextDirection)) {
+      direction = nextDirection;
+    }
+
+    const head = { ...snake[0] };
+    if (direction === 'up') head.y -= 1;
+    if (direction === 'down') head.y += 1;
+    if (direction === 'left') head.x -= 1;
+    if (direction === 'right') head.x += 1;
+
+    const hitsWall = head.x < 0 || head.x >= GRID_SIZE || head.y < 0 || head.y >= GRID_SIZE;
+    const hitsSelf = snake.some((seg) => seg.x === head.x && seg.y === head.y);
+
+    if (hitsWall || hitsSelf) {
+      endGame();
+      return;
+    }
+
+    snake.unshift(head);
+
+    if (head.x === food.x && head.y === food.y) {
+      score += 10;
+      scoreEl.textContent = score;
+      placeFood();
+    } else {
+      snake.pop();
+    }
+
+    draw();
+  }
+
+  function isOpposite(a, b) {
+    return (
+      (a === 'up' && b === 'down') ||
+      (a === 'down' && b === 'up') ||
+      (a === 'left' && b === 'right') ||
+      (a === 'right' && b === 'left')
+    );
+  }
+
+  function endGame() {
+    gameOver = true;
+    running = false;
+    clearInterval(loopId);
+    if (score > best) {
+      best = score;
+      localStorage.setItem('snake-best', String(best));
+      bestEl.textContent = best;
+    }
+    messageEl.textContent = `Fim de jogo! Pontuação: ${score}. Clique em Reiniciar para jogar novamente.`;
+  }
+
+  function startLoop() {
+    if (running) return;
+    running = true;
+    loopId = setInterval(step, SPEED_MS);
+  }
+
+  function setDirection(dir) {
+    if (gameOver) return;
+    nextDirection = dir;
+    startLoop();
+  }
+
+  const KEY_MAP = {
+    ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right',
+    w: 'up', s: 'down', a: 'left', d: 'right',
+    W: 'up', S: 'down', A: 'left', D: 'right',
+  };
+
+  window.addEventListener('keydown', (e) => {
+    const dir = KEY_MAP[e.key];
+    if (dir) {
+      e.preventDefault();
+      setDirection(dir);
+    }
+  });
+
+  document.getElementById('dpad').addEventListener('click', (e) => {
+    const dir = e.target.closest('button')?.dataset.dir;
+    if (dir) setDirection(dir);
+  });
+
+  restartBtn.addEventListener('click', () => {
+    clearInterval(loopId);
+    running = false;
+    resetState();
+    draw();
+  });
+
+  resetState();
+  draw();
+})();
+</script>
+</body>
+</html>

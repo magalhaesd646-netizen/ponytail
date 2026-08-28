@@ -1,8 +1,0 @@
-services:
-  - type: web
-    name: arbitrage-detector
-    runtime: docker
-    dockerfilePath: ./Dockerfile
-    rootDir: arbitrage-detector
-    plan: free
-    autoDeploy: true

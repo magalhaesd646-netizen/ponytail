@@ -1,0 +1,295 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sorteio de Times</title>
+  <style>
+body {
+  font-family: system-ui, sans-serif;
+  max-width: 480px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+  color: #222;
+}
+
+h1 {
+  font-size: 1.4rem;
+}
+
+label {
+  display: block;
+  margin-bottom: 0.3rem;
+}
+
+textarea {
+  width: 100%;
+  font: inherit;
+  padding: 0.5rem;
+  box-sizing: border-box;
+  margin-bottom: 0.5rem;
+}
+
+input, button, textarea {
+  font-size: 1rem;
+  padding: 0.5rem;
+}
+
+#player-list {
+  list-style: none;
+  padding: 0;
+}
+
+#player-list li {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0;
+  border-bottom: 1px solid #eee;
+}
+
+#player-list li .name {
+  flex: 1;
+}
+
+.draw-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin: 1.5rem 0;
+}
+
+button.secondary {
+  background: #eee;
+}
+
+#draw-result {
+  white-space: pre-wrap;
+  background: #f6f6f6;
+  padding: 1rem;
+  border-radius: 6px;
+}
+
+.team {
+  margin-bottom: 1rem;
+}
+
+.team h3 {
+  margin: 0 0 0.3rem;
+}
+
+  </style>
+</head>
+<body>
+<main>
+    <h1>Sorteio de Times</h1>
+
+    <label for="paste-area">Cole aqui a lista de jogadores do grupo (um nome por linha):</label>
+    <textarea id="paste-area" rows="8" placeholder="1. Fulano&#10;2. Beltrano&#10;3. Ciclano"></textarea>
+    <button id="load-btn">Carregar lista</button>
+
+    <ul id="player-list"></ul>
+
+    <div class="draw-controls" id="draw-controls" hidden>
+      <label>Jogadores de linha por time: <input id="team-size" type="number" value="5" min="1"></label>
+      <button id="draw-btn">Sortear times</button>
+      <button id="clear-btn" class="secondary">Recomeçar</button>
+    </div>
+
+    <div id="draw-result"></div>
+  </main>
+<script>
+function shuffle(list) {
+  const result = [...list];
+  for (let i = result.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [result[i], result[j]] = [result[j], result[i]];
+  }
+  return result;
+}
+
+// Round-robins `pool` into `teams`, skipping any team already at `teamSize`.
+// Players that don't fit anywhere (all teams full) land in reserves.
+function distribute(pool, teams, teamSize, startIndex) {
+  const reserves = [];
+  let index = startIndex;
+  for (const player of pool) {
+    let skipped = 0;
+    while (teams[index % teams.length].length >= teamSize && skipped < teams.length) {
+      index++;
+      skipped++;
+    }
+    if (skipped >= teams.length) {
+      reserves.push(player);
+    } else {
+      teams[index % teams.length].push(player);
+      index++;
+    }
+  }
+  return { nextIndex: index, reserves };
+}
+
+/**
+ * Draws balanced teams from a player list.
+ * Goalkeepers are assigned one per team and never enter the outfield draw.
+ * Seeded players ("cabeças de chave") are spread one per team before the
+ * rest of the pool is shuffled in, so the strongest players don't stack.
+ *
+ * @param {{name: string, isGoalkeeper?: boolean, isSeed?: boolean}[]} players
+ * @param {{teamSize?: number, numberOfTeams?: number}} [options]
+ */
+function drawTeams(players, options = {}) {
+  const teamSize = options.teamSize ?? 5;
+  if (!Number.isInteger(teamSize) || teamSize < 1) {
+    throw new Error("teamSize must be a positive integer");
+  }
+
+  const goalkeepers = players.filter((p) => p.isGoalkeeper);
+  const outfield = players.filter((p) => !p.isGoalkeeper);
+
+  const numberOfTeams = options.numberOfTeams ?? (goalkeepers.length || Math.ceil(outfield.length / teamSize) || 1);
+  if (!Number.isInteger(numberOfTeams) || numberOfTeams < 1) {
+    throw new Error("numberOfTeams must be a positive integer");
+  }
+
+  const shuffledGoalkeepers = shuffle(goalkeepers);
+  const teamGoalkeepers = shuffledGoalkeepers.slice(0, numberOfTeams);
+  const extraGoalkeepers = shuffledGoalkeepers.slice(numberOfTeams);
+
+  const seeds = shuffle(outfield.filter((p) => p.isSeed));
+  const rest = shuffle(outfield.filter((p) => !p.isSeed));
+
+  const teams = Array.from({ length: numberOfTeams }, () => []);
+  const seedResult = distribute(seeds, teams, teamSize, 0);
+  const restResult = distribute([...extraGoalkeepers, ...rest], teams, teamSize, seedResult.nextIndex);
+
+  return {
+    teams: teams.map((teamPlayers, i) => ({
+      name: `Time ${i + 1}`,
+      goalkeeper: teamGoalkeepers[i] ?? null,
+      players: teamPlayers,
+    })),
+    reserves: [...seedResult.reserves, ...restResult.reserves],
+  };
+}
+
+if (typeof module !== "undefined" && module.exports) {
+  module.exports = { drawTeams };
+} else {
+  window.drawTeams = drawTeams;
+}
+
+</script>
+<script>
+let players = [];
+
+const playerList = document.getElementById("player-list");
+const drawControls = document.getElementById("draw-controls");
+const drawResult = document.getElementById("draw-result");
+
+function parsePlayers(text) {
+  let lines = text
+    .split("\n")
+    .map((l) => l.trim())
+    .filter(Boolean);
+
+  if (lines.length === 1 && lines[0].includes(",")) {
+    lines = lines[0].split(",").map((l) => l.trim()).filter(Boolean);
+  }
+
+  return lines
+    .map((line) => line.replace(/^\s*(\d+[.)-]|[-*•])\s*/, "").trim())
+    .filter(Boolean);
+}
+
+function renderPlayers() {
+  playerList.innerHTML = "";
+  players.forEach((player, index) => {
+    const li = document.createElement("li");
+
+    const name = document.createElement("span");
+    name.className = "name";
+    name.textContent = player.name;
+    li.appendChild(name);
+
+    li.appendChild(makeToggle("🧤 Goleiro", player.isGoalkeeper, (checked) => {
+      players[index].isGoalkeeper = checked;
+    }));
+    li.appendChild(makeToggle("⭐ Cabeça de chave", player.isSeed, (checked) => {
+      players[index].isSeed = checked;
+    }));
+
+    playerList.appendChild(li);
+  });
+}
+
+function makeToggle(label, checked, onChange) {
+  const wrapper = document.createElement("label");
+  const checkbox = document.createElement("input");
+  checkbox.type = "checkbox";
+  checkbox.checked = checked;
+  checkbox.onchange = () => onChange(checkbox.checked);
+  wrapper.appendChild(checkbox);
+  wrapper.appendChild(document.createTextNode(label));
+  return wrapper;
+}
+
+function renderDraw(draw) {
+  drawResult.innerHTML = "";
+  for (const team of draw.teams) {
+    const div = document.createElement("div");
+    div.className = "team";
+    const title = document.createElement("h3");
+    title.textContent = `${team.name} — 🧤 ${team.goalkeeper ? team.goalkeeper.name : "(sem goleiro fixo)"}`;
+    div.appendChild(title);
+    const ul = document.createElement("ul");
+    for (const player of team.players) {
+      const li = document.createElement("li");
+      li.textContent = `${player.name}${player.isSeed ? " ⭐" : ""}`;
+      ul.appendChild(li);
+    }
+    div.appendChild(ul);
+    drawResult.appendChild(div);
+  }
+  if (draw.reserves.length) {
+    const title = document.createElement("h3");
+    title.textContent = "Reservas";
+    drawResult.appendChild(title);
+    const ul = document.createElement("ul");
+    for (const player of draw.reserves) {
+      const li = document.createElement("li");
+      li.textContent = player.name;
+      ul.appendChild(li);
+    }
+    drawResult.appendChild(ul);
+  }
+}
+
+document.getElementById("load-btn").addEventListener("click", () => {
+  const names = parsePlayers(document.getElementById("paste-area").value);
+  players = names.map((name) => ({ name, isGoalkeeper: false, isSeed: false }));
+  drawResult.innerHTML = "";
+  drawControls.hidden = players.length === 0;
+  renderPlayers();
+});
+
+document.getElementById("draw-btn").addEventListener("click", () => {
+  const teamSize = Number(document.getElementById("team-size").value) || 5;
+  try {
+    renderDraw(drawTeams(players, { teamSize }));
+  } catch (err) {
+    alert(err.message);
+  }
+});
+
+document.getElementById("clear-btn").addEventListener("click", () => {
+  players = [];
+  document.getElementById("paste-area").value = "";
+  drawControls.hidden = true;
+  playerList.innerHTML = "";
+  drawResult.innerHTML = "";
+});
+
+</script>
+</body>
+</html>

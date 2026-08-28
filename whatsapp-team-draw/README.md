@@ -17,6 +17,12 @@ Sem instalação, sem servidor: é uma página estática.
 
 Tudo roda no seu navegador, nenhum dado sai da sua máquina.
 
+**No celular:** baixe só o arquivo `public/standalone.html` (é o mesmo app,
+mas empacotado num arquivo único, sem depender de `style.css`/`app.js` ao
+lado — abre certo mesmo saindo da pasta do Downloads). Gerado a partir dos
+arquivos acima com `node scripts/build-standalone.js`; rode de novo se editar
+`index.html`, `style.css` ou `app.js`.
+
 ## Bot de WhatsApp (opcional)
 
 Se preferir que o próprio grupo se cadastre via comandos, em vez de colar a

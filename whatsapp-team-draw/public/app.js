@@ -1,19 +1,27 @@
+let players = [];
+
 const playerList = document.getElementById("player-list");
+const drawControls = document.getElementById("draw-controls");
 const drawResult = document.getElementById("draw-result");
 
-async function api(path, options) {
-  const res = await fetch(path, {
-    headers: { "Content-Type": "application/json" },
-    ...options,
-  });
-  if (!res.ok) throw new Error((await res.json().catch(() => ({}))).error || res.statusText);
-  return res.status === 204 ? null : res.json();
+function parsePlayers(text) {
+  let lines = text
+    .split("\n")
+    .map((l) => l.trim())
+    .filter(Boolean);
+
+  if (lines.length === 1 && lines[0].includes(",")) {
+    lines = lines[0].split(",").map((l) => l.trim()).filter(Boolean);
+  }
+
+  return lines
+    .map((line) => line.replace(/^\s*(\d+[.)-]|[-*•])\s*/, "").trim())
+    .filter(Boolean);
 }
 
-function renderPlayers(players) {
-  const myPlayerId = localStorage.getItem("playerId");
+function renderPlayers() {
   playerList.innerHTML = "";
-  for (const player of players) {
+  players.forEach((player, index) => {
     const li = document.createElement("li");
 
     const name = document.createElement("span");
@@ -21,51 +29,29 @@ function renderPlayers(players) {
     name.textContent = player.name;
     li.appendChild(name);
 
-    const isMine = player.id === myPlayerId;
-
-    li.appendChild(makeToggle("🧤", player.isGoalkeeper, isMine, (checked) =>
-      api(`/api/players/${player.id}`, { method: "PATCH", body: JSON.stringify({ isGoalkeeper: checked }) }),
-    ));
-    li.appendChild(makeToggle("⭐", player.isSeed, isMine, (checked) =>
-      api(`/api/players/${player.id}`, { method: "PATCH", body: JSON.stringify({ isSeed: checked }) }),
-    ));
-
-    if (isMine) {
-      const leave = document.createElement("button");
-      leave.textContent = "Sair";
-      leave.className = "secondary";
-      leave.onclick = async () => {
-        await api(`/api/players/${player.id}`, { method: "DELETE" });
-        localStorage.removeItem("playerId");
-        refresh();
-      };
-      li.appendChild(leave);
-    }
+    li.appendChild(makeToggle("🧤 Goleiro", player.isGoalkeeper, (checked) => {
+      players[index].isGoalkeeper = checked;
+    }));
+    li.appendChild(makeToggle("⭐ Cabeça de chave", player.isSeed, (checked) => {
+      players[index].isSeed = checked;
+    }));
 
     playerList.appendChild(li);
-  }
+  });
 }
 
-function makeToggle(label, checked, enabled, onChange) {
+function makeToggle(label, checked, onChange) {
   const wrapper = document.createElement("label");
   const checkbox = document.createElement("input");
   checkbox.type = "checkbox";
   checkbox.checked = checked;
-  checkbox.disabled = !enabled;
-  checkbox.onchange = async () => {
-    await onChange(checkbox.checked);
-    refresh();
-  };
+  checkbox.onchange = () => onChange(checkbox.checked);
   wrapper.appendChild(checkbox);
   wrapper.appendChild(document.createTextNode(label));
   return wrapper;
 }
 
 function renderDraw(draw) {
-  if (!draw) {
-    drawResult.textContent = "";
-    return;
-  }
   drawResult.innerHTML = "";
   for (const team of draw.teams) {
     const div = document.createElement("div");
@@ -96,37 +82,27 @@ function renderDraw(draw) {
   }
 }
 
-async function refresh() {
-  const [players, draw] = await Promise.all([api("/api/players"), api("/api/draw")]);
-  renderPlayers(players);
-  renderDraw(draw);
-}
-
-document.getElementById("join-form").addEventListener("submit", async (e) => {
-  e.preventDefault();
-  const input = document.getElementById("name-input");
-  const player = await api("/api/players", { method: "POST", body: JSON.stringify({ name: input.value }) });
-  localStorage.setItem("playerId", player.id);
-  input.value = "";
-  refresh();
+document.getElementById("load-btn").addEventListener("click", () => {
+  const names = parsePlayers(document.getElementById("paste-area").value);
+  players = names.map((name) => ({ name, isGoalkeeper: false, isSeed: false }));
+  drawResult.innerHTML = "";
+  drawControls.hidden = players.length === 0;
+  renderPlayers();
 });
 
-document.getElementById("draw-btn").addEventListener("click", async () => {
+document.getElementById("draw-btn").addEventListener("click", () => {
   const teamSize = Number(document.getElementById("team-size").value) || 5;
   try {
-    await api("/api/draw", { method: "POST", body: JSON.stringify({ teamSize }) });
-    refresh();
+    renderDraw(drawTeams(players, { teamSize }));
   } catch (err) {
     alert(err.message);
   }
 });
 
-document.getElementById("clear-btn").addEventListener("click", async () => {
-  if (!confirm("Zerar a lista de jogadores?")) return;
-  await api("/api/clear", { method: "POST" });
-  localStorage.removeItem("playerId");
-  refresh();
+document.getElementById("clear-btn").addEventListener("click", () => {
+  players = [];
+  document.getElementById("paste-area").value = "";
+  drawControls.hidden = true;
+  playerList.innerHTML = "";
+  drawResult.innerHTML = "";
 });
-
-refresh();
-setInterval(refresh, 3000);

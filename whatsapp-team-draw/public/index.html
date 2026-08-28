@@ -10,21 +10,21 @@
   <main>
     <h1>Sorteio de Times</h1>
 
-    <form id="join-form">
-      <input id="name-input" type="text" placeholder="Seu nome" maxlength="40" required>
-      <button type="submit">Entrar</button>
-    </form>
+    <label for="paste-area">Cole aqui a lista de jogadores do grupo (um nome por linha):</label>
+    <textarea id="paste-area" rows="8" placeholder="1. Fulano&#10;2. Beltrano&#10;3. Ciclano"></textarea>
+    <button id="load-btn">Carregar lista</button>
 
     <ul id="player-list"></ul>
 
-    <div class="draw-controls">
+    <div class="draw-controls" id="draw-controls" hidden>
       <label>Jogadores de linha por time: <input id="team-size" type="number" value="5" min="1"></label>
       <button id="draw-btn">Sortear times</button>
-      <button id="clear-btn" class="secondary">Limpar lista</button>
+      <button id="clear-btn" class="secondary">Recomeçar</button>
     </div>
 
     <div id="draw-result"></div>
   </main>
+  <script src="../src/teamDraw.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

@@ -72,4 +72,8 @@ function drawTeams(players, options = {}) {
   };
 }
 
-module.exports = { drawTeams };
+if (typeof module !== "undefined" && module.exports) {
+  module.exports = { drawTeams };
+} else {
+  window.drawTeams = drawTeams;
+}

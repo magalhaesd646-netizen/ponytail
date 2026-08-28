@@ -55,6 +55,30 @@ do escopo desta primeira versão.
 4. Abra `http://localhost:5000`, cole sua API key, escolha o esporte e as
    regiões das casas, e clique em "Iniciar monitoramento".
 
+## Deploy com link público (Render, grátis)
+
+Para ter um link acessível de qualquer dispositivo (não só `localhost`),
+o repositório já vem pronto com `Dockerfile` e `render.yaml`:
+
+1. Crie uma conta gratuita em https://render.com (dá para logar com GitHub).
+2. No painel, clique em **New +** → **Blueprint**, selecione o repositório
+   `ponytail` e a branch `claude/ecc-plugin-install-lo9rwq`.
+3. O Render lê o `render.yaml` (dentro de `arbitrage-detector/`) e já
+   configura tudo — build com Docker, plano gratuito. Clique em **Apply**.
+4. Em 1–3 minutos o serviço fica no ar em uma URL como
+   `https://arbitrage-detector-xxxx.onrender.com`.
+
+Alternativas equivalentes, usando o mesmo `Dockerfile`: [Railway](https://railway.app)
+(New Project → Deploy from GitHub repo) ou [Fly.io](https://fly.io) (`fly launch`
+dentro da pasta `arbitrage-detector`).
+
+**Importante:** um link público fica acessível para qualquer pessoa que o
+tiver. Você continua colando sua própria API key na tela a cada sessão (ela
+não fica salva no servidor, só no seu navegador) — mas qualquer pessoa com
+o link pode abrir o app e usar a interface. No plano gratuito do Render o
+serviço "dorme" depois de um tempo sem uso e demora ~30s para acordar na
+próxima visita.
+
 A API key nunca é salva no servidor — ela fica só no seu navegador durante a
 sessão e é enviada para o backend a cada checagem, que repassa para a The
 Odds API.

@@ -12,20 +12,24 @@
 <body>
   <main>
     <header class="scoreboard">
-      <p class="scoreboard__eyebrow">Pelada de sábado</p>
+      <div class="crest"><img src="logo.png" alt="Football Amigos"></div>
       <h1 class="scoreboard__title">Sorteio de Times</h1>
     </header>
 
     <section class="card" id="paste-section">
       <label for="paste-area">Cole a lista de jogadores do grupo</label>
-      <textarea id="paste-area" rows="7" placeholder="1. Fulano&#10;2. Beltrano&#10;3. Ciclano"></textarea>
-      <button id="load-btn" class="btn btn--pitch">Carregar lista</button>
+      <textarea id="paste-area" rows="7" placeholder="1. Fulano&#10;2. Beltrano (Goleiro)&#10;3. Ciclano"></textarea>
+      <button id="load-btn" class="btn btn--teal">Carregar lista</button>
     </section>
 
     <section class="card" id="roster-section" hidden>
       <div class="roster-header">
         <h2>Escalação</h2>
-        <p class="roster-hint">Toque na estrela dos 3 ou 4 melhores — eles serão espalhados entre os times.</p>
+        <p class="roster-hint">
+          ⭐ marca os 3 ou 4 melhores (espalhados entre os times). 🧤 tira o
+          goleiro do sorteio — identificamos automático, mas você pode
+          corrigir tocando.
+        </p>
       </div>
       <ol id="player-list" class="roster"></ol>
 
@@ -41,7 +45,16 @@
 
     <section id="result-section" hidden>
       <div id="draw-result" class="teams"></div>
-      <button id="share-btn" class="btn btn--accent btn--share">Compartilhar resultado</button>
+      <p id="goalkeepers-note" class="goalkeepers-note" hidden></p>
+
+      <div class="card share-panel">
+        <label for="share-text">Resultado pra colar no grupo</label>
+        <textarea id="share-text" readonly rows="7"></textarea>
+        <div class="share-actions">
+          <button id="copy-btn" class="btn btn--accent">Copiar texto</button>
+          <button id="native-share-btn" class="btn btn--sky" hidden>Compartilhar</button>
+        </div>
+      </div>
     </section>
   </main>
   <script src="../src/teamDraw.js"></script>

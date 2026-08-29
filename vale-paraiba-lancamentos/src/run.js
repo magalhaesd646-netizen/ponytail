@@ -2,15 +2,20 @@
 
 require('dotenv').config();
 
+const fs = require('fs');
+const path = require('path');
 const { CITIES, WEB_QUERY_TEMPLATE, SOCIAL_QUERY_TEMPLATE } = require('./config');
 const { googleSearch } = require('./sources/googleSearch');
 const { searchPortalsForCity } = require('./sources/portalScraper');
-const { normalizeResult } = require('./lib/extractor');
+const { normalizeResult, loadKnownBuilders, findKnownBuilder } = require('./lib/extractor');
 const { findTechEmail } = require('./lib/emailFinder');
 const { sendDigest } = require('./lib/notifier');
+const { createAlertIssue } = require('./lib/githubIssue');
+const { fetchHtml } = require('./lib/http');
 const state = require('./lib/state');
 
 const DEFAULT_GOOGLE_DAILY_QUERY_BUDGET = 90;
+const DATA_JSON_PATH = path.join(__dirname, '..', 'web', 'data.json');
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -20,7 +25,9 @@ function sleep(ms) {
 // cidade consome até 2 buscas (web + redes sociais); o orçamento garante que
 // nunca estouramos a cota mesmo com todas as cidades do Vale do Paraíba
 // configuradas, e prioriza sempre as primeiras cidades da lista (São José
-// dos Campos, Jacareí e Taubaté vêm primeiro em CITIES por padrão).
+// dos Campos, Jacareí e Taubaté vêm primeiro em CITIES por padrão). Sem
+// GOOGLE_API_KEY/GOOGLE_CSE_ID configurados, essas buscas são puladas e o
+// app funciona só com os portais públicos (modo zero-config).
 function makeQueryBudget(max) {
   let used = 0;
   return {
@@ -61,6 +68,34 @@ async function collectRawResultsForCity(city, budget) {
   return raw;
 }
 
+// Quando a Google Custom Search API não está configurada (modo zero-config),
+// os resultados de portal costumam não trazer o nome da construtora no
+// texto do link de listagem. Para itens NOVOS ainda sem construtora
+// identificada, buscamos a própria página de detalhe do anúncio e tentamos
+// reconhecer alguma construtora conhecida no HTML. Só fazemos isso para
+// itens novos (não para todos os resultados) para manter o custo de rede
+// baixo.
+async function enrichConstrutoraFromDetailPage(item, knownBuilders) {
+  if (item.construtoraIdentificada || item.sourceType !== 'portal' || !item.url) return;
+  const html = await fetchHtml(item.url, { timeout: 10000 });
+  if (!html) return;
+  const builder = findKnownBuilder(html, knownBuilders);
+  if (!builder) return;
+  item.construtora = builder.name;
+  item.incorporadora = builder.isAlsoIncorporadora ? builder.name : item.incorporadora;
+  item.construtoraIdentificada = true;
+}
+
+function writeDashboardData(snapshotItems) {
+  const payload = {
+    generatedAt: new Date().toISOString(),
+    cidades: CITIES.length,
+    items: snapshotItems,
+  };
+  fs.mkdirSync(path.dirname(DATA_JSON_PATH), { recursive: true });
+  fs.writeFileSync(DATA_JSON_PATH, JSON.stringify(payload, null, 2) + '\n', 'utf8');
+}
+
 async function main() {
   const st = state.load();
   state.prune(st);
@@ -95,16 +130,30 @@ async function main() {
       `resultados brutos: ${normalized.length} | únicos nesta execução: ${uniqueById.size} | novos: ${newItems.length}`
   );
 
+  const knownBuilders = loadKnownBuilders();
   for (const item of newItems) {
+    await enrichConstrutoraFromDetailPage(item, knownBuilders);
     const companyName = item.construtora || item.incorporadora;
     item.emailContato = companyName ? await findTechEmail(companyName) : null;
   }
 
   state.save(st);
 
+  const newItemIds = new Set(newItems.map((n) => n.id));
+  const snapshot = Array.from(uniqueById.values()).map((item) => ({
+    ...item,
+    isNew: newItemIds.has(item.id),
+    firstSeen: st.ids[item.id] || item.foundAt,
+  }));
+  writeDashboardData(snapshot);
+
   if (newItems.length) {
-    const result = await sendDigest(newItems);
-    console.log('[run] notificação:', result);
+    const [emailResult, issueResult] = await Promise.all([
+      sendDigest(newItems),
+      createAlertIssue(newItems),
+    ]);
+    console.log('[run] alerta por e-mail (opcional):', emailResult);
+    console.log('[run] alerta por GitHub Issue (padrão):', issueResult);
   } else {
     console.log('[run] nenhum lançamento novo hoje.');
   }

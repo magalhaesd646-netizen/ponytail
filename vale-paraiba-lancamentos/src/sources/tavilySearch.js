@@ -64,7 +64,8 @@ async function tavilySearch(query, opts = {}) {
     }));
   } catch (err) {
     const status = err.response && err.response.status;
-    const detail = err.response && err.response.data && (err.response.data.detail || err.response.data.error);
+    const rawDetail = err.response && err.response.data && (err.response.data.detail || err.response.data.error);
+    const detail = typeof rawDetail === 'string' ? rawDetail : rawDetail ? JSON.stringify(rawDetail) : null;
     console.warn(
       `[tavilySearch] falha na busca "${query}"${status ? ` (HTTP ${status})` : ''}: ${detail || err.message}`
     );

@@ -50,18 +50,21 @@ function citiesFromEnv() {
   return list.length ? list : DEFAULT_CITIES;
 }
 
-// Consultas usadas nas buscas via Google Custom Search. "{cidade}" é
-// substituído pelo nome da cidade. Mantemos só 2 queries por cidade
-// (web + redes sociais) para caber na cota gratuita da API (100/dia) mesmo
-// cobrindo todos os municípios do Vale do Paraíba — ver src/run.js.
+// Consultas usadas nas buscas via API de busca (Tavily ou Google Custom
+// Search — ver src/sources/webSearch.js). "{cidade}" é substituído pelo nome
+// da cidade. Mantemos só 2 queries por cidade (web + redes sociais) para
+// caber nas cotas gratuitas típicas dessas APIs mesmo cobrindo todos os
+// municípios do Vale do Paraíba — ver src/run.js.
 const WEB_QUERY_TEMPLATE =
   '("lançamento imobiliário" OR "novo empreendimento imobiliário" OR "pré-lançamento" OR "apartamentos na planta") {cidade}';
 
-// Não fazemos login nem scraping direto do Instagram/Facebook (ver README) —
-// usamos o operador site: para restringir a busca do Google a posts públicos
-// indexados nessas redes.
 const SOCIAL_QUERY_TEMPLATE =
-  '(site:instagram.com OR site:facebook.com) ("lançamento imobiliário" OR "novo empreendimento" OR "pré-lançamento") {cidade}';
+  '("lançamento imobiliário" OR "novo empreendimento" OR "pré-lançamento") {cidade}';
+
+// Não fazemos login nem scraping direto do Instagram/Facebook (ver README) —
+// restringimos a busca a esses domínios (via include_domains no Tavily, ou
+// operador site: no Google) para achar só posts públicos já indexados.
+const SOCIAL_SITE_DOMAINS = ['instagram.com', 'facebook.com'];
 
 // Portais públicos de imóveis com página de "lançamentos" por cidade.
 // A extração é feita de forma resiliente (ver src/sources/portalScraper.js),
@@ -113,6 +116,7 @@ module.exports = {
   CITIES: citiesFromEnv(),
   WEB_QUERY_TEMPLATE,
   SOCIAL_QUERY_TEMPLATE,
+  SOCIAL_SITE_DOMAINS,
   PORTALS,
   TECH_DEPT_KEYWORDS,
   GENERIC_DEPT_FALLBACK_KEYWORDS,

@@ -19,9 +19,9 @@ function hasCredentials() {
 }
 
 /**
- * @param {string} query texto da busca
+ * @param {string} query texto da busca (restrição por domínio, se houver, já
+ *   deve vir embutida na query como operador site: — ver src/sources/webSearch.js)
  * @param {object} [opts]
- * @param {string} [opts.siteSearch] restringe a um domínio (ex.: instagram.com)
  * @param {number} [opts.num] número de resultados (máx. 10 por página na API)
  * @returns {Promise<Array<{title: string, link: string, snippet: string}>>}
  */
@@ -44,10 +44,6 @@ async function googleSearch(query, opts = {}) {
     gl: 'br',
     hl: 'pt-BR',
   };
-  if (opts.siteSearch) {
-    params.siteSearch = opts.siteSearch;
-    params.siteSearchFilter = 'i';
-  }
 
   try {
     const { data } = await axios.get(ENDPOINT, { params, timeout: 10000 });

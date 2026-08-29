@@ -6,26 +6,19 @@ on:
     - cron: '0 11 * * *'
   workflow_dispatch: {}
 
-# contents: para commitar data/seen.json (histórico do que já foi notificado)
-# issues: para abrir uma Issue de alerta quando há lançamento novo (canal
-#   padrão, zero-config — usa o GITHUB_TOKEN automático do Actions)
-# pages/id-token: para publicar o painel web (web/) no GitHub Pages
-permissions:
-  contents: write
-  issues: write
-  pages: write
-  id-token: write
-
 defaults:
   run:
     working-directory: vale-paraiba-lancamentos
 
 jobs:
+  # Busca os lançamentos, abre a Issue de alerta e salva o estado. Não
+  # depende do GitHub Pages estar habilitado — roda e funciona mesmo que o
+  # deploy do painel (job seguinte) ainda não esteja configurado.
   run:
     runs-on: ubuntu-latest
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+    permissions:
+      contents: write # commitar data/seen.json
+      issues: write # abrir a Issue de alerta (canal padrão, zero-config)
     steps:
       - uses: actions/checkout@v4
 
@@ -66,13 +59,38 @@ jobs:
             git push
           fi
 
-      - name: Preparar painel web
-        uses: actions/configure-pages@v5
+      - name: Publicar painel como artefato (para o job de deploy)
+        uses: actions/upload-artifact@v4
+        with:
+          name: pages-web
+          path: vale-paraiba-lancamentos/web
+          retention-days: 1
+
+  # Job separado: só mexe com o GitHub Pages. Se o Pages ainda não estiver
+  # habilitado em Settings → Pages → Source → "GitHub Actions", só ESTE job
+  # falha — a busca/alerta do job "run" acima já rodou normalmente.
+  deploy-pages:
+    needs: run
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Baixar painel gerado
+        uses: actions/download-artifact@v4
+        with:
+          name: pages-web
+          path: web
+
+      - uses: actions/configure-pages@v5
 
       - name: Empacotar painel web
         uses: actions/upload-pages-artifact@v3
         with:
-          path: vale-paraiba-lancamentos/web
+          path: web
 
       - name: Publicar no GitHub Pages
         id: deployment

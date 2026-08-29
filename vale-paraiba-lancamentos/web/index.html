@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Lançamentos Imobiliários — Vale do Paraíba</title>
+<style>
+  :root {
+    color-scheme: light dark;
+    --bg: #f6f5f2;
+    --card: #ffffff;
+    --text: #1c1a17;
+    --muted: #6b6560;
+    --border: #e4e0d8;
+    --accent: #8a5a34;
+    --accent-bg: #f1e4d6;
+    --new-bg: #e9f3e6;
+    --new-text: #2f6b30;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #17140f;
+      --card: #221e18;
+      --text: #f1ede6;
+      --muted: #a89e8f;
+      --border: #3a342a;
+      --accent: #d9a869;
+      --accent-bg: #3a2d1c;
+      --new-bg: #1e3320;
+      --new-text: #7fd18a;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  }
+  header {
+    padding: 28px 20px 16px;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+  h1 { font-size: 1.5rem; margin: 0 0 4px; }
+  .subtitle { color: var(--muted); font-size: 0.9rem; }
+  .controls {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 20px 16px;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+  input, select {
+    padding: 9px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--card);
+    color: var(--text);
+    font-size: 0.9rem;
+  }
+  input[type="search"] { flex: 1; min-width: 220px; }
+  main { max-width: 1100px; margin: 0 auto; padding: 0 20px 60px; }
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 14px;
+  }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+  }
+  .card h2 {
+    font-size: 1.02rem;
+    margin: 0 0 8px;
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .badge {
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: var(--new-bg);
+    color: var(--new-text);
+  }
+  .row { font-size: 0.86rem; color: var(--muted); margin: 3px 0; }
+  .row b { color: var(--text); font-weight: 600; }
+  .row a { color: var(--accent); }
+  .source-tag {
+    display: inline-block;
+    font-size: 0.72rem;
+    color: var(--accent);
+    background: var(--accent-bg);
+    padding: 1px 7px;
+    border-radius: 6px;
+    margin-top: 8px;
+  }
+  .empty {
+    text-align: center;
+    color: var(--muted);
+    padding: 60px 20px;
+    line-height: 1.6;
+  }
+  .empty code {
+    background: var(--accent-bg);
+    padding: 1px 6px;
+    border-radius: 4px;
+  }
+  footer {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 20px 40px;
+    color: var(--muted);
+    font-size: 0.78rem;
+  }
+</style>
+</head>
+<body>
+  <header>
+    <h1>🏗️ Lançamentos Imobiliários — Vale do Paraíba</h1>
+    <div class="subtitle" id="subtitle">Carregando...</div>
+  </header>
+
+  <div class="controls">
+    <input type="search" id="search" placeholder="Buscar por empreendimento ou construtora..." />
+    <select id="cityFilter"><option value="">Todas as cidades</option></select>
+    <select id="sortBy">
+      <option value="new">Mais recentes primeiro</option>
+      <option value="name">Nome (A-Z)</option>
+      <option value="city">Cidade (A-Z)</option>
+    </select>
+  </div>
+
+  <main>
+    <div class="grid" id="grid"></div>
+    <div class="empty" id="empty" hidden></div>
+  </main>
+
+  <footer>
+    Gerado automaticamente por um monitor diário (portais públicos + Google Custom Search).
+    Este painel não substitui a checagem direta com a construtora/incorporadora antes de
+    qualquer decisão comercial. Código-fonte em
+    <code>vale-paraiba-lancamentos/</code> no repositório.
+  </footer>
+
+<script>
+(async function () {
+  const els = {
+    subtitle: document.getElementById('subtitle'),
+    grid: document.getElementById('grid'),
+    empty: document.getElementById('empty'),
+    search: document.getElementById('search'),
+    cityFilter: document.getElementById('cityFilter'),
+    sortBy: document.getElementById('sortBy'),
+  };
+
+  function escapeHtml(str) {
+    return String(str ?? '').replace(/[&<>"']/g, (c) => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+    }[c]));
+  }
+
+  function formatDate(iso) {
+    if (!iso) return null;
+    try {
+      return new Date(iso).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' });
+    } catch {
+      return iso;
+    }
+  }
+
+  let data = { generatedAt: null, cidades: 0, items: [] };
+  try {
+    const res = await fetch('./data.json', { cache: 'no-store' });
+    if (res.ok) data = await res.json();
+  } catch (err) {
+    console.warn('Falha ao carregar data.json', err);
+  }
+
+  const items = Array.isArray(data.items) ? data.items : [];
+
+  const cities = [...new Set(items.map((i) => i.cidade).filter(Boolean))].sort();
+  for (const c of cities) {
+    const opt = document.createElement('option');
+    opt.value = c;
+    opt.textContent = c;
+    els.cityFilter.appendChild(opt);
+  }
+
+  const generated = formatDate(data.generatedAt);
+  els.subtitle.textContent = items.length
+    ? `${items.length} lançamento(s) monitorados em ${data.cidades || cities.length} cidade(s)` +
+      (generated ? ` · atualizado em ${generated}` : '')
+    : 'Nenhum dado ainda.';
+
+  function cardHtml(item) {
+    const emailBlock = item.emailContato
+      ? `<div class="row"><b>E-mail (${escapeHtml(item.emailContato.departamento)}):</b> <a href="mailto:${escapeHtml(item.emailContato.email)}">${escapeHtml(item.emailContato.email)}</a></div>`
+      : `<div class="row">E-mail: não encontrado automaticamente</div>`;
+    return `
+      <div class="card">
+        <h2>${escapeHtml(item.empreendimento || '(nome não identificado)')}
+          ${item.isNew ? '<span class="badge">novo</span>' : ''}
+        </h2>
+        <div class="row"><b>Cidade:</b> ${escapeHtml(item.cidade || '-')}</div>
+        <div class="row"><b>Construtora:</b> ${escapeHtml(item.construtora || 'não identificada automaticamente')}</div>
+        <div class="row"><b>Incorporadora:</b> ${escapeHtml(item.incorporadora || 'não identificada automaticamente')}</div>
+        ${emailBlock}
+        <a class="source-tag" href="${escapeHtml(item.url || '#')}" target="_blank" rel="noopener">
+          fonte: ${escapeHtml(item.sourceLabel || item.sourceType || '-')}
+        </a>
+      </div>`;
+  }
+
+  function render() {
+    const q = els.search.value.trim().toLowerCase();
+    const city = els.cityFilter.value;
+    const sort = els.sortBy.value;
+
+    let filtered = items.filter((i) => {
+      if (city && i.cidade !== city) return false;
+      if (!q) return true;
+      const haystack = `${i.empreendimento || ''} ${i.construtora || ''} ${i.incorporadora || ''}`.toLowerCase();
+      return haystack.includes(q);
+    });
+
+    filtered = filtered.slice().sort((a, b) => {
+      if (sort === 'name') return (a.empreendimento || '').localeCompare(b.empreendimento || '');
+      if (sort === 'city') return (a.cidade || '').localeCompare(b.cidade || '');
+      return new Date(b.firstSeen || 0) - new Date(a.firstSeen || 0);
+    });
+
+    if (!filtered.length) {
+      els.grid.hidden = true;
+      els.empty.hidden = false;
+      els.empty.innerHTML = items.length
+        ? 'Nenhum resultado para esse filtro.'
+        : 'Nenhum lançamento encontrado ainda. Isso é esperado até a primeira execução automática ' +
+          'do monitor (ver <code>.github/workflows/vale-paraiba-lancamentos.yml</code>), ou pode ' +
+          'significar que só o modo zero-config (portais públicos) está ativo — configure a Google ' +
+          'Custom Search API para ampliar a cobertura (ver README).';
+      return;
+    }
+
+    els.grid.hidden = false;
+    els.empty.hidden = true;
+    els.grid.innerHTML = filtered.map(cardHtml).join('');
+  }
+
+  els.search.addEventListener('input', render);
+  els.cityFilter.addEventListener('change', render);
+  els.sortBy.addEventListener('change', render);
+  render();
+})();
+</script>
+</body>
+</html>

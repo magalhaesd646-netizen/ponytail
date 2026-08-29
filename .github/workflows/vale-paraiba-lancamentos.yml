@@ -1,0 +1,79 @@
+name: vale-paraiba-lancamentos
+
+on:
+  schedule:
+    # 11:00 UTC ~= 08:00 horário de Brasília (UTC-3, sem horário de verão)
+    - cron: '0 11 * * *'
+  workflow_dispatch: {}
+
+# contents: para commitar data/seen.json (histórico do que já foi notificado)
+# issues: para abrir uma Issue de alerta quando há lançamento novo (canal
+#   padrão, zero-config — usa o GITHUB_TOKEN automático do Actions)
+# pages/id-token: para publicar o painel web (web/) no GitHub Pages
+permissions:
+  contents: write
+  issues: write
+  pages: write
+  id-token: write
+
+defaults:
+  run:
+    working-directory: vale-paraiba-lancamentos
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Instalar dependências
+        run: npm install
+
+      - name: Rodar monitor de lançamentos
+        env:
+          # Canal de alerta padrão (Issues) — não precisa configurar nada,
+          # o Actions já injeta esse token.
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Upgrades opcionais (ver README) — deixe os secrets vazios/ausentes
+          # para rodar só no modo zero-config (portais públicos + Issues).
+          GOOGLE_API_KEY: ${{ secrets.VALE_GOOGLE_API_KEY }}
+          GOOGLE_CSE_ID: ${{ secrets.VALE_GOOGLE_CSE_ID }}
+          GOOGLE_DAILY_QUERY_BUDGET: '90'
+          SMTP_HOST: ${{ secrets.VALE_SMTP_HOST }}
+          SMTP_PORT: ${{ secrets.VALE_SMTP_PORT }}
+          SMTP_USER: ${{ secrets.VALE_SMTP_USER }}
+          SMTP_PASS: ${{ secrets.VALE_SMTP_PASS }}
+          SMTP_FROM: ${{ secrets.VALE_SMTP_FROM }}
+          ALERT_EMAIL_TO: ${{ secrets.VALE_ALERT_EMAIL_TO }}
+        run: npm start
+
+      - name: Salvar estado atualizado (lançamentos já notificados)
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/seen.json
+          if git diff --cached --quiet; then
+            echo "Nenhuma mudança no estado."
+          else
+            git commit -m "chore: atualiza estado de lançamentos monitorados"
+            git push
+          fi
+
+      - name: Preparar painel web
+        uses: actions/configure-pages@v5
+
+      - name: Empacotar painel web
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: vale-paraiba-lancamentos/web
+
+      - name: Publicar no GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

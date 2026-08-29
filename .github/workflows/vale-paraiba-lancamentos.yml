@@ -1,0 +1,54 @@
+name: vale-paraiba-lancamentos
+
+on:
+  schedule:
+    # 11:00 UTC ~= 08:00 horário de Brasília (UTC-3, sem horário de verão)
+    - cron: '0 11 * * *'
+  workflow_dispatch: {}
+
+# Necessário para o job poder commitar o arquivo de estado (data/seen.json)
+# de volta no repositório.
+permissions:
+  contents: write
+
+defaults:
+  run:
+    working-directory: vale-paraiba-lancamentos
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Instalar dependências
+        run: npm install
+
+      - name: Rodar monitor de lançamentos
+        env:
+          GOOGLE_API_KEY: ${{ secrets.VALE_GOOGLE_API_KEY }}
+          GOOGLE_CSE_ID: ${{ secrets.VALE_GOOGLE_CSE_ID }}
+          GOOGLE_DAILY_QUERY_BUDGET: '90'
+          SMTP_HOST: ${{ secrets.VALE_SMTP_HOST }}
+          SMTP_PORT: ${{ secrets.VALE_SMTP_PORT }}
+          SMTP_USER: ${{ secrets.VALE_SMTP_USER }}
+          SMTP_PASS: ${{ secrets.VALE_SMTP_PASS }}
+          SMTP_FROM: ${{ secrets.VALE_SMTP_FROM }}
+          ALERT_EMAIL_TO: ${{ secrets.VALE_ALERT_EMAIL_TO }}
+        run: npm start
+
+      - name: Salvar estado atualizado (lançamentos já notificados)
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/seen.json
+          if git diff --cached --quiet; then
+            echo "Nenhuma mudança no estado."
+          else
+            git commit -m "chore: atualiza estado de lançamentos monitorados"
+            git push
+          fi

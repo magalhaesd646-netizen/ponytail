@@ -1,0 +1,62 @@
+[
+  {
+    "name": "MRV Engenharia",
+    "aliases": ["mrv", "mrv engenharia"],
+    "website": "https://www.mrv.com.br",
+    "isAlsoIncorporadora": true
+  },
+  {
+    "name": "Cyrela",
+    "aliases": ["cyrela"],
+    "website": "https://www.cyrela.com.br",
+    "isAlsoIncorporadora": true
+  },
+  {
+    "name": "Even",
+    "aliases": ["even", "even construtora"],
+    "website": "https://www.even.com.br",
+    "isAlsoIncorporadora": true
+  },
+  {
+    "name": "Tenda",
+    "aliases": ["tenda", "construtora tenda"],
+    "website": "https://www.tenda.com",
+    "isAlsoIncorporadora": true
+  },
+  {
+    "name": "EZTEC",
+    "aliases": ["eztec"],
+    "website": "https://www.eztec.com.br",
+    "isAlsoIncorporadora": true
+  },
+  {
+    "name": "Direcional Engenharia",
+    "aliases": ["direcional", "direcional engenharia"],
+    "website": "https://www.direcional.com.br",
+    "isAlsoIncorporadora": true
+  },
+  {
+    "name": "Trisul",
+    "aliases": ["trisul"],
+    "website": "https://www.trisul-sp.com.br",
+    "isAlsoIncorporadora": true
+  },
+  {
+    "name": "Setin Incorporadora",
+    "aliases": ["setin"],
+    "website": "https://www.setin.com.br",
+    "isAlsoIncorporadora": true
+  },
+  {
+    "name": "Vitacon",
+    "aliases": ["vitacon"],
+    "website": "https://www.vitacon.com.br",
+    "isAlsoIncorporadora": true
+  },
+  {
+    "name": "Kallas",
+    "aliases": ["kallas"],
+    "website": "https://www.kallas.com.br",
+    "isAlsoIncorporadora": true
+  }
+]

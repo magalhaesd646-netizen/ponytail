@@ -37,6 +37,10 @@ async function tavilySearch(query, opts = {}) {
 
   const body = {
     query,
+    // A API aceita a chave tanto no header Authorization quanto no corpo
+    // (api_key) — mandamos os dois pra cobrir os dois formatos de chave que
+    // o Tavily emite (dashboard normal e chaves "-dev-" do fluxo MCP).
+    api_key: process.env.TAVILY_API_KEY,
     search_depth: 'basic',
     max_results: opts.num || 10,
   };
@@ -60,8 +64,9 @@ async function tavilySearch(query, opts = {}) {
     }));
   } catch (err) {
     const status = err.response && err.response.status;
+    const detail = err.response && err.response.data && (err.response.data.detail || err.response.data.error);
     console.warn(
-      `[tavilySearch] falha na busca "${query}"${status ? ` (HTTP ${status})` : ''}: ${err.message}`
+      `[tavilySearch] falha na busca "${query}"${status ? ` (HTTP ${status})` : ''}: ${detail || err.message}`
     );
     return [];
   }

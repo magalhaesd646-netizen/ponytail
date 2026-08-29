@@ -115,6 +115,7 @@ function writeDashboardData(snapshotItems) {
 
 async function main() {
   const st = state.load();
+  const isFirstRun = Object.keys(st.ids).length === 0;
   state.prune(st);
 
   const budget = makeQueryBudget(
@@ -165,7 +166,15 @@ async function main() {
   }));
   writeDashboardData(snapshot);
 
-  if (newItems.length) {
+  if (isFirstRun && newItems.length) {
+    // Primeira execução (estado vazio): tudo que a busca acha vira "novo" de
+    // uma vez só. Em vez de inundar o alerta com centenas de itens de
+    // carga inicial, só semeamos o estado silenciosamente — o painel web já
+    // mostra tudo. A partir da próxima execução, o alerta volta ao normal.
+    console.log(
+      `[run] primeira execução: ${newItems.length} lançamento(s) carregados como base inicial (sem alerta, para não inundar de uma vez). Veja o painel web.`
+    );
+  } else if (newItems.length) {
     const [emailResult, issueResult] = await Promise.all([
       sendDigest(newItems),
       createAlertIssue(newItems),

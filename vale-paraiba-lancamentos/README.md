@@ -3,17 +3,29 @@
 Monitor diário de **lançamentos imobiliários** em São José dos Campos,
 Jacareí, Taubaté e nos demais municípios do Vale do Paraíba Paulista, com um
 **painel web** e **alerta automático** (GitHub Issue + notificação nativa do
-GitHub) sempre que algo novo é encontrado — sem precisar criar nenhuma
-credencial para começar a funcionar.
+GitHub) sempre que algo novo é encontrado. Setup mínimo: uma chave de busca
+grátis (Tavily, ver abaixo) — o resto (alerta, painel, estado) já funciona
+sozinho, sem SMTP nem outras credenciais.
 
-## Funciona "pronto", sem configurar nada
+## ⚠️ Sem chave de busca, o app não acha quase nada
 
-Depois de mesclado na branch padrão (`main`) e com o **GitHub Pages
-habilitado uma única vez** (30 segundos, ver abaixo), o app já roda sozinho
-todo dia:
+O plano era rodar 100% sem credenciais, buscando só nos portais públicos
+(Viva Real, ZAP). Na prática isso **não funciona rodando no GitHub
+Actions**: esses portais bloqueiam com HTTP 403 as requisições vindas dos
+IPs do Actions (proteção anti-bot). Ou seja, sem uma chave de busca web
+configurada, o monitor roda todo dia, mas normalmente não encontra nada de
+verdade.
 
-- Busca lançamentos nos portais públicos (Viva Real, ZAP Imóveis) — não
-  precisa de chave de API para isso.
+**A chave do Tavily (upgrade abaixo) deixou de ser opcional na prática — é o
+que faz o app funcionar de verdade.** O resto (Issue de alerta, painel web,
+estado) já funciona sozinho.
+
+Depois de mesclado na branch padrão (`main`), com a chave do Tavily
+configurada e com o **GitHub Pages habilitado uma única vez** (30 segundos,
+ver abaixo), o app roda sozinho todo dia:
+
+- Busca lançamentos via Tavily (ou Google, se preferir) + tenta os portais
+  públicos como bônus.
 - Quando acha algo novo, **abre uma Issue** no próprio repositório com o
   resumo (empreendimento, cidade, construtora, incorporadora, e-mail de
   contato quando encontrado). O GitHub já te avisa por e-mail
@@ -23,11 +35,6 @@ todo dia:
 - Publica um **painel web** (`web/index.html`) no GitHub Pages, com busca,
   filtro por cidade e destaque para os lançamentos novos — dá pra checar
   quando quiser, sem esperar o e-mail.
-
-As duas únicas coisas que **exigem uma ação sua** são as que nenhum app
-consegue fazer sozinho: habilitar o GitHub Pages (é um botão nas
-configurações do repositório, não uma credencial) e, se quiser, criar chaves
-de API/e-mail para os upgrades opcionais abaixo.
 
 ### Passo único: habilitar o GitHub Pages
 
@@ -39,20 +46,27 @@ URL que aparece ali (formato `https://<usuário>.github.io/<repo>/`).
 Pronto — a partir daí é só esperar a execução diária (ou rodar manualmente
 pela aba **Actions → vale-paraiba-lancamentos → Run workflow**).
 
-## Upgrades opcionais (deixam o app melhor, mas não são obrigatórios)
+## Upgrades
 
-| Upgrade | O que melhora | O que exige |
+| Upgrade | O que faz | O que exige |
 |---|---|---|
-| Google Custom Search API | Busca ampla no Google + posts públicos de Instagram/Facebook indexados; melhora bastante a identificação de construtora/incorporadora | Uma chave de API do Google (grátis até 100 buscas/dia) |
+| **Tavily (recomendado)** | Busca web de verdade — o que faz o app achar lançamentos na prática, já que os portais bloqueiam o GitHub Actions | Uma chave só, plano grátis com 1.000 créditos/mês, sem cartão |
+| Google Custom Search (alternativa) | O mesmo papel do Tavily, mas com setup em duas etapas | Chave de API + mecanismo de busca do Google, grátis até 100/dia |
 | E-mail próprio (SMTP) | Além da Issue, também manda um e-mail digest formatado para quem você quiser | Senha de app de um e-mail (ex.: Gmail) |
 
-Sem esses dois, o app roda no **modo zero-config**: só portais públicos +
-Issue de alerta + painel web. É mais limitado (a construtora nem sempre é
-identificada, porque o nome dela raramente aparece no link de listagem do
-portal — o app tenta compensar abrindo a página de detalhe do anúncio, mas
-não é garantido), porém já funciona de verdade sem nenhuma conta nova.
+Configure **um dos dois primeiros** (Tavily ou Google — não precisa dos
+dois; se configurar os dois, o Tavily tem prioridade). Sem nenhum dos dois,
+o app roda no **modo zero-config** (só portais públicos + Issue + painel),
+que hoje em dia não encontra praticamente nada de real (ver aviso no topo).
 
-### Ativando o upgrade do Google (opcional)
+### Ativando o Tavily (recomendado — setup mais simples)
+
+1. Crie uma conta e uma chave de API em
+   [app.tavily.com](https://app.tavily.com/) (plano grátis, sem cartão).
+2. No repositório, vá em **Settings → Secrets and variables → Actions** →
+   **"New repository secret"** e crie `VALE_TAVILY_API_KEY` com essa chave.
+
+### Ativando o Google Custom Search (alternativa)
 
 1. Crie uma chave de API em
    [console.cloud.google.com/apis/credentials](https://console.cloud.google.com/apis/credentials)
@@ -86,25 +100,31 @@ Para Gmail, gere a senha de app em
 Fazer scraping autenticado dessas redes (logando com uma conta pessoal para
 raspar páginas de empresas) viola os termos de uso da Meta, é tecnicamente
 frágil (bloqueios, captchas, mudanças de layout) e pode banir a conta usada.
-Com o upgrade do Google ativado, o app usa o **Google Custom Search** para
-achar posts **públicos** dessas redes já indexados pelo Google — mais
-estável, porém também mais limitado (nem todo post é indexado).
+Com o Tavily ou o Google ativado, o app restringe a busca aos domínios
+`instagram.com`/`facebook.com` para achar posts **públicos** dessas redes já
+indexados — mais estável, porém também mais limitado (nem todo post é
+indexado).
 
 ## Limitações importantes (leia antes de confiar 100% no alerta)
 
 - Isso **não é um feed oficial** de lançamentos — é uma busca heurística.
   Pode haver falsos negativos (lançamento que não aparece) e falsos
   positivos.
-- A identificação de construtora/incorporadora funciona melhor com o
-  upgrade do Google ativado. Complete
+- A identificação de construtora/incorporadora funciona melhor com o Tavily
+  ou o Google ativado. Complete
   [`data/known-builders.json`](./data/known-builders.json) com as
   construtoras que você já conhece atuando na região para melhorar a
   precisão em qualquer modo.
 - O e-mail encontrado é uma **melhor tentativa**, nunca garantida.
-- Os portais (Viva Real/ZAP) podem bloquear requisições automatizadas
-  (HTTP 403) dependendo do IP/frequência. Quando isso acontece, o app não
-  quebra — só ignora aquele portal naquela execução e segue com as outras
-  fontes.
+- Os portais (Viva Real/ZAP) hoje bloqueiam as requisições vindas do GitHub
+  Actions (HTTP 403) — por isso viraram uma fonte bônus, não a principal.
+  Quando isso acontece, o app não quebra — só ignora aquele portal naquela
+  execução e segue com as outras fontes.
+- Com o orçamento diário de buscas (`SEARCH_DAILY_QUERY_BUDGET`, padrão 30)
+  nem todas as ~34 cidades são pesquisadas por busca web todo dia — as 3
+  prioritárias sempre entram, as demais giram por dia (ver
+  `orderedCitiesForToday` em `src/run.js`), cobrindo todas ao longo de
+  poucos dias.
 
 ## Rodando localmente (para testar/desenvolver)
 
@@ -125,8 +145,10 @@ estático, ex.: `npx serve web` ou `python3 -m http.server --directory web`.
 src/
   config.js               cidades, templates de busca, palavras-chave
   sources/
-    googleSearch.js        wrapper da Google Custom Search API (opcional)
-    portalScraper.js        scraper resiliente de portais públicos
+    webSearch.js            escolhe Tavily ou Google conforme o que estiver configurado
+    tavilySearch.js         wrapper da Tavily Search API (recomendado)
+    googleSearch.js         wrapper da Google Custom Search API (alternativa)
+    portalScraper.js        scraper resiliente de portais públicos (fonte bônus)
   lib/
     extractor.js            normaliza resultados brutos em "lançamentos"
     emailFinder.js           acha e-mail de depto técnico no site da empresa

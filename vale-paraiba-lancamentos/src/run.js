@@ -4,8 +4,8 @@ require('dotenv').config();
 
 const fs = require('fs');
 const path = require('path');
-const { CITIES, WEB_QUERY_TEMPLATE, SOCIAL_QUERY_TEMPLATE } = require('./config');
-const { googleSearch } = require('./sources/googleSearch');
+const { CITIES, WEB_QUERY_TEMPLATE, SOCIAL_QUERY_TEMPLATE, SOCIAL_SITE_DOMAINS } = require('./config');
+const { webSearch } = require('./sources/webSearch');
 const { searchPortalsForCity } = require('./sources/portalScraper');
 const { normalizeResult, loadKnownBuilders, findKnownBuilder } = require('./lib/extractor');
 const { findTechEmail } = require('./lib/emailFinder');
@@ -14,20 +14,22 @@ const { createAlertIssue } = require('./lib/githubIssue');
 const { fetchHtml } = require('./lib/http');
 const state = require('./lib/state');
 
-const DEFAULT_GOOGLE_DAILY_QUERY_BUDGET = 90;
+// Padrão conservador o suficiente para caber no plano grátis do Tavily
+// (1.000 créditos/mês ≈ 33/dia) mesmo rodando todo dia — dá pra aumentar via
+// env se só o Google estiver configurado (cota gratuita de 100/dia).
+const DEFAULT_SEARCH_DAILY_QUERY_BUDGET = 30;
+const PRIORITY_CITY_COUNT = 3; // São José dos Campos, Jacareí, Taubaté
 const DATA_JSON_PATH = path.join(__dirname, '..', 'web', 'data.json');
 
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-// A cota gratuita da Google Custom Search API é de 100 buscas/dia. Cada
-// cidade consome até 2 buscas (web + redes sociais); o orçamento garante que
-// nunca estouramos a cota mesmo com todas as cidades do Vale do Paraíba
-// configuradas, e prioriza sempre as primeiras cidades da lista (São José
-// dos Campos, Jacareí e Taubaté vêm primeiro em CITIES por padrão). Sem
-// GOOGLE_API_KEY/GOOGLE_CSE_ID configurados, essas buscas são puladas e o
-// app funciona só com os portais públicos (modo zero-config).
+// Cada cidade consome até 2 buscas (web + redes sociais); o orçamento
+// garante que nunca estouramos a cota gratuita do provedor configurado
+// (Tavily ou Google), mesmo com todas as cidades do Vale do Paraíba
+// configuradas. Sem nenhum provedor configurado, essas buscas são puladas e
+// o app funciona só com os portais públicos (modo zero-config).
 function makeQueryBudget(max) {
   let used = 0;
   return {
@@ -37,6 +39,21 @@ function makeQueryBudget(max) {
     },
     used: () => used,
   };
+}
+
+// Com o orçamento diário limitado, nem todas as ~34 cidades cabem numa
+// execução só. As prioritárias (São José dos Campos, Jacareí, Taubaté)
+// sempre entram primeiro; as demais giram por dia (baseado na data), para
+// que todas acabem cobertas ao longo de alguns dias em vez de sempre as
+// mesmas primeiras da lista.
+function orderedCitiesForToday(cities, priorityCount = PRIORITY_CITY_COUNT) {
+  if (cities.length <= priorityCount) return cities;
+  const priority = cities.slice(0, priorityCount);
+  const rest = cities.slice(priorityCount);
+  const dayIndex = Math.floor(Date.now() / 86400000);
+  const offset = dayIndex % rest.length;
+  const rotated = [...rest.slice(offset), ...rest.slice(0, offset)];
+  return [...priority, ...rotated];
 }
 
 async function collectRawResultsForCity(city, budget) {
@@ -49,19 +66,19 @@ async function collectRawResultsForCity(city, budget) {
 
   if (budget.hasRoom()) {
     const webQuery = WEB_QUERY_TEMPLATE.replace('{cidade}', city);
-    const webResults = await googleSearch(webQuery);
+    const webResults = await webSearch(webQuery);
     budget.consume();
     for (const r of webResults) {
-      raw.push({ ...r, city, sourceType: 'google-web', sourceLabel: 'Google' });
+      raw.push({ ...r, city, sourceType: 'web-search', sourceLabel: 'Busca web' });
     }
   }
 
   if (budget.hasRoom()) {
     const socialQuery = SOCIAL_QUERY_TEMPLATE.replace('{cidade}', city);
-    const socialResults = await googleSearch(socialQuery);
+    const socialResults = await webSearch(socialQuery, { domains: SOCIAL_SITE_DOMAINS });
     budget.consume();
     for (const r of socialResults) {
-      raw.push({ ...r, city, sourceType: 'google-social', sourceLabel: 'Google (Instagram/Facebook)' });
+      raw.push({ ...r, city, sourceType: 'web-search-social', sourceLabel: 'Busca web (Instagram/Facebook)' });
     }
   }
 
@@ -101,11 +118,12 @@ async function main() {
   state.prune(st);
 
   const budget = makeQueryBudget(
-    Number(process.env.GOOGLE_DAILY_QUERY_BUDGET) || DEFAULT_GOOGLE_DAILY_QUERY_BUDGET
+    Number(process.env.SEARCH_DAILY_QUERY_BUDGET || process.env.GOOGLE_DAILY_QUERY_BUDGET) ||
+      DEFAULT_SEARCH_DAILY_QUERY_BUDGET
   );
 
   const normalized = [];
-  for (const city of CITIES) {
+  for (const city of orderedCitiesForToday(CITIES)) {
     const raw = await collectRawResultsForCity(city, budget);
     for (const item of raw) {
       const result = normalizeResult(item);
@@ -126,7 +144,7 @@ async function main() {
   }
 
   console.log(
-    `[run] cidades pesquisadas: ${CITIES.length} | buscas Google tentadas: ${budget.used()} | ` +
+    `[run] cidades pesquisadas: ${CITIES.length} | buscas web tentadas: ${budget.used()} | ` +
       `resultados brutos: ${normalized.length} | únicos nesta execução: ${uniqueById.size} | novos: ${newItems.length}`
   );
 
@@ -168,4 +186,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { main, collectRawResultsForCity, makeQueryBudget };
+module.exports = { main, collectRawResultsForCity, makeQueryBudget, orderedCitiesForToday };

@@ -591,13 +591,33 @@
     document.getElementById('ocrStatus').textContent = 'Imagem selecionada. Clique em "Extrair dados" para preencher os campos.';
   });
 
+  // Garante que QUALQUER falha (mesmo um erro inesperado fora da promise, ou
+  // uma restrição do navegador ao abrir o arquivo direto do disco) apareça
+  // como mensagem visível, em vez de o botão simplesmente não fazer nada.
+  var ocrProcessing = false;
+  window.addEventListener('error', function (e) {
+    if (!ocrProcessing) return;
+    ocrProcessing = false;
+    document.getElementById('ocrStatus').textContent = 'Erro ao ler a imagem: ' + (e.message || 'falha desconhecida') + '. Preencha manualmente.';
+  });
+  window.addEventListener('unhandledrejection', function (e) {
+    if (!ocrProcessing) return;
+    ocrProcessing = false;
+    var msg = e.reason && e.reason.message ? e.reason.message : String(e.reason);
+    document.getElementById('ocrStatus').textContent = 'Erro ao ler a imagem: ' + msg + '. Preencha manualmente.';
+  });
+
   document.getElementById('readImageBtn').addEventListener('click', function () {
     var file = document.getElementById('imageInput').files[0];
     if (!file) {
       document.getElementById('ocrStatus').textContent = 'Selecione uma imagem primeiro.';
       return;
     }
-    processImage(file);
+    try {
+      processImage(file);
+    } catch (err) {
+      document.getElementById('ocrStatus').textContent = 'Erro ao iniciar a leitura: ' + err.message + '. Preencha manualmente.';
+    }
   });
 
   // Prints de apps de investimento costumam ter tema escuro (texto claro sobre
@@ -644,9 +664,10 @@
   function processImage(file) {
     var statusEl = document.getElementById('ocrStatus');
     if (typeof Tesseract === 'undefined') {
-      statusEl.textContent = 'Leitor de imagem indisponível (sem conexão com a internet). Preencha manualmente.';
+      statusEl.textContent = 'Leitor de imagem indisponível (sem conexão com a internet, ou o navegador bloqueou o carregamento). Preencha manualmente.';
       return;
     }
+    ocrProcessing = true;
     statusEl.textContent = 'Lendo imagem... 0%';
     preprocessImage(file).then(function (source) {
       return Tesseract.recognize(source, 'por', {
@@ -684,8 +705,11 @@
       statusEl.textContent = achados.length
         ? 'Identificado automaticamente: ' + achados.join(', ') + '. Complete o restante e salve.'
         : 'Não foi possível identificar dados na imagem. Preencha manualmente.';
-    }).catch(function () {
-      statusEl.textContent = 'Falha ao ler a imagem. Preencha manualmente.';
+      ocrProcessing = false;
+    }).catch(function (err) {
+      ocrProcessing = false;
+      var msg = err && err.message ? err.message : 'motivo desconhecido';
+      statusEl.textContent = 'Falha ao ler a imagem (' + msg + '). Preencha manualmente.';
     });
   }
 

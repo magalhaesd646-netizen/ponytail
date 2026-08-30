@@ -296,37 +296,39 @@
       }
     });
 
-    var ctx = document.getElementById('chart').getContext('2d');
     var total = data.reduce(function (a, b) { return a + b; }, 0);
+    var canvas = document.getElementById('chart');
 
-    if (chart) chart.destroy();
-
-    if (data.length === 0) {
-      document.getElementById('chart').style.display = 'none';
-      return;
-    }
-    document.getElementById('chart').style.display = 'block';
-
-    chart = new Chart(ctx, {
-      type: 'doughnut',
-      data: {
-        labels: labels,
-        datasets: [{ data: data, backgroundColor: colors, borderWidth: 2, borderColor: getComputedStyle(document.documentElement).getPropertyValue('--card').trim() }]
-      },
-      options: {
-        plugins: {
-          legend: { display: false },
-          tooltip: {
-            callbacks: {
-              label: function (ctx) {
-                var pct = total ? (ctx.parsed / total * 100).toFixed(1) : 0;
-                return ctx.label + ': ' + formatBRL(ctx.parsed) + ' (' + pct + '%)';
+    if (typeof Chart === 'undefined') {
+      canvas.style.display = 'none';
+    } else {
+      if (chart) chart.destroy();
+      if (data.length === 0) {
+        canvas.style.display = 'none';
+      } else {
+        canvas.style.display = 'block';
+        chart = new Chart(canvas.getContext('2d'), {
+          type: 'doughnut',
+          data: {
+            labels: labels,
+            datasets: [{ data: data, backgroundColor: colors, borderWidth: 2, borderColor: getComputedStyle(document.documentElement).getPropertyValue('--card').trim() }]
+          },
+          options: {
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                callbacks: {
+                  label: function (ctx) {
+                    var pct = total ? (ctx.parsed / total * 100).toFixed(1) : 0;
+                    return ctx.label + ': ' + formatBRL(ctx.parsed) + ' (' + pct + '%)';
+                  }
+                }
               }
             }
           }
-        }
+        });
       }
-    });
+    }
 
     var totalsEl = document.getElementById('totals');
     totalsEl.innerHTML = '';
@@ -397,7 +399,11 @@
 
   function render() {
     var items = loadItems();
-    renderChart(items);
+    try {
+      renderChart(items);
+    } catch (e) {
+      document.getElementById('chart').style.display = 'none';
+    }
     renderList(items);
   }
 
@@ -515,6 +521,10 @@
       statusEl.textContent = 'Selecione uma imagem primeiro.';
       return;
     }
+    if (typeof Tesseract === 'undefined') {
+      statusEl.textContent = 'Leitor de imagem indisponível (sem conexão com a internet). Preencha manualmente.';
+      return;
+    }
     statusEl.textContent = 'Lendo imagem... 0%';
     Tesseract.recognize(file, 'por', {
       logger: function (m) {
@@ -562,12 +572,16 @@
       if (isoMatch) result.data = isoMatch[0];
     }
 
-    // Valor: formato brasileiro, ex: R$ 1.234,56 — prioriza valores com "R$" na frente
-    var withCurrency = text.match(/R\$\s?(\d{1,3}(?:\.\d{3})*,\d{2})/);
-    var candidates = text.match(/\d{1,3}(?:\.\d{3})*,\d{2}/g);
-    var chosen = withCurrency ? withCurrency[1] : (candidates && candidates.length ? candidates.sort(function (a, b) {
+    // Valor: formato brasileiro, ex: R$ 1.234,56 — entre os valores com "R$" na
+    // frente, prioriza o maior (normalmente o saldo/total, não uma taxa ou saldo parcial)
+    var byValue = function (a, b) {
       return parseFloat(b.replace(/\./g, '').replace(',', '.')) - parseFloat(a.replace(/\./g, '').replace(',', '.'));
-    })[0] : null);
+    };
+    var withCurrencyAll = text.match(/R\$\s?\d{1,3}(?:\.\d{3})*,\d{2}/g);
+    var candidates = text.match(/\d{1,3}(?:\.\d{3})*,\d{2}/g);
+    var chosen = withCurrencyAll
+      ? withCurrencyAll.map(function (s) { return s.replace(/^R\$\s?/, ''); }).sort(byValue)[0]
+      : (candidates && candidates.length ? candidates.sort(byValue)[0] : null);
     if (chosen) {
       result.valor = parseFloat(chosen.replace(/\./g, '').replace(',', '.'));
     }

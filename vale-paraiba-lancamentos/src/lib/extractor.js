@@ -2,7 +2,7 @@
 
 const fs = require('fs');
 const path = require('path');
-const { hashId } = require('./text');
+const { hashId, normalizeText } = require('./text');
 
 const KNOWN_BUILDERS_PATH = path.join(__dirname, '..', '..', 'data', 'known-builders.json');
 
@@ -25,11 +25,20 @@ function cleanEmpreendimentoName(rawTitle) {
   return firstSegment || rawTitle.trim();
 }
 
+function escapeRegex(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
+// Match por palavra inteira (não substring): sem isso, o alias "even" bate
+// dentro de "eventos", "sac", etc., gerando construtora errada em qualquer
+// página que mencione um evento qualquer. normalizeText tira acento antes,
+// pra \b funcionar direito com nomes acentuados (ex.: "Araújo Simão").
 function findKnownBuilder(text, knownBuilders) {
-  const lower = (text || '').toLowerCase();
+  const normalized = normalizeText(text || '');
   for (const builder of knownBuilders) {
     for (const alias of builder.aliases || []) {
-      if (lower.includes(alias.toLowerCase())) {
+      const re = new RegExp(`\\b${escapeRegex(normalizeText(alias))}\\b`);
+      if (re.test(normalized)) {
         return builder;
       }
     }

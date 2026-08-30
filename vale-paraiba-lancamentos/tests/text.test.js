@@ -2,7 +2,13 @@
 
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { slugify, hashId, extractEmails, textMentionsCity } = require('../src/lib/text');
+const {
+  slugify,
+  hashId,
+  extractEmails,
+  textMentionsCity,
+  textMentionsRealEstateLaunch,
+} = require('../src/lib/text');
 
 test('slugify remove acentos e espaços', () => {
   assert.equal(slugify('São José dos Campos'), 'sao-jose-dos-campos');
@@ -34,4 +40,22 @@ test('textMentionsCity retorna false quando a cidade não aparece no texto', () 
   assert.equal(textMentionsCity('Lançamento em Curitiba, PR', 'Cruzeiro'), false);
   assert.equal(textMentionsCity('', 'Taubaté'), false);
   assert.equal(textMentionsCity('Lançamento em Taubaté', ''), false);
+});
+
+test('textMentionsRealEstateLaunch aceita texto com vocabulário imobiliário', () => {
+  assert.equal(textMentionsRealEstateLaunch('Novo empreendimento com apartamentos de 2 dormitórios'), true);
+  assert.equal(textMentionsRealEstateLaunch('Construtora e Incorporadora em Taubaté'), true);
+  assert.equal(textMentionsRealEstateLaunch('Lotes à venda, banheiro e suíte'), true);
+});
+
+test('textMentionsRealEstateLaunch rejeita conteúdo sem relação com imóveis (vaga, evento, clima)', () => {
+  assert.equal(textMentionsRealEstateLaunch('5ª Etapa Campeonato Vale Paraibano 2026'), false);
+  assert.equal(textMentionsRealEstateLaunch('Previsão do tempo em São Bento do Sapucaí'), false);
+  assert.equal(textMentionsRealEstateLaunch('Gerente de vendas - vaga de emprego'), false);
+  assert.equal(textMentionsRealEstateLaunch(''), false);
+});
+
+test('textMentionsRealEstateLaunch rejeita aluguel/locação mesmo citando apartamento', () => {
+  assert.equal(textMentionsRealEstateLaunch('Apartamento 3 dormitórios para alugar em Jacareí'), false);
+  assert.equal(textMentionsRealEstateLaunch('Imóvel disponível para locação'), false);
 });

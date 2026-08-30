@@ -2,7 +2,7 @@
 
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { orderedCitiesForToday, makeQueryBudget, filterByCityMention } = require('../src/run');
+const { orderedCitiesForToday, makeQueryBudget, filterRelevantResults } = require('../src/run');
 
 test('orderedCitiesForToday mantém as prioritárias sempre primeiro', () => {
   const cities = ['A', 'B', 'C', 'D', 'E', 'F', 'G'];
@@ -26,13 +26,13 @@ test('makeQueryBudget respeita o limite máximo', () => {
   assert.equal(budget.used(), 2);
 });
 
-test('filterByCityMention descarta resultados que não citam a cidade buscada', () => {
+test('filterRelevantResults descarta resultados que não citam a cidade buscada', () => {
   const results = [
     { title: 'Lançamento em Taubaté, SP', snippet: 'apartamentos novos' },
     { title: 'Lançamento em Curitiba, PR', snippet: 'apartamentos novos' },
     { title: 'Novo empreendimento', snippet: 'em Taubaté, próximo ao centro' },
   ];
-  const filtered = filterByCityMention(results, 'Taubaté');
+  const filtered = filterRelevantResults(results, 'Taubaté');
   assert.equal(filtered.length, 2);
   assert.ok(filtered.every((r) => `${r.title} ${r.snippet}`.includes('Taubaté')));
 });

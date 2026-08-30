@@ -1,0 +1,583 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Meus Investimentos</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.4/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js"></script>
+<style>
+  :root {
+    color-scheme: light dark;
+    --bg: #f6f5f2;
+    --card: #ffffff;
+    --text: #1c1a17;
+    --muted: #6b6560;
+    --border: #e4e0d8;
+    --accent: #2e7d6b;
+    --accent-bg: #e1f0eb;
+    --danger: #b0453d;
+    --renda-fixa: #2e7d6b;
+    --acoes: #c76a2e;
+    --fundos: #6a4fa0;
+    --cripto: #b8860b;
+    --outros: #6b6560;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #17140f;
+      --card: #221e18;
+      --text: #f1ede6;
+      --muted: #a89e8f;
+      --border: #3a342a;
+      --accent: #5bc2a8;
+      --accent-bg: #1c332c;
+      --danger: #e08079;
+      --renda-fixa: #5bc2a8;
+      --acoes: #e6975a;
+      --fundos: #a98ee0;
+      --cripto: #e0bb5a;
+      --outros: #a89e8f;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  }
+  header { padding: 28px 20px 16px; max-width: 1100px; margin: 0 auto; }
+  h1 { font-size: 1.5rem; margin: 0 0 4px; }
+  .subtitle { color: var(--muted); font-size: 0.9rem; }
+  main { max-width: 1100px; margin: 0 auto; padding: 0 20px 60px; display: grid; gap: 24px; }
+
+  section.card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+  }
+  section.card h2 { font-size: 1.05rem; margin: 0 0 14px; }
+
+  .overview { display: grid; grid-template-columns: 260px 1fr; gap: 24px; align-items: center; }
+  @media (max-width: 640px) { .overview { grid-template-columns: 1fr; } }
+  .chart-wrap { position: relative; width: 100%; max-width: 260px; margin: 0 auto; }
+  .totals { display: grid; gap: 8px; }
+  .total-row { display: flex; align-items: center; justify-content: space-between; padding: 6px 0; border-bottom: 1px solid var(--border); font-size: 0.92rem; }
+  .total-row:last-child { border-bottom: none; font-weight: 600; }
+  .dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 8px; }
+  .empty { color: var(--muted); font-size: 0.9rem; }
+
+  form { display: grid; gap: 12px; }
+  .row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+  @media (max-width: 720px) { .row { grid-template-columns: 1fr 1fr; } }
+  label { font-size: 0.8rem; color: var(--muted); display: block; margin-bottom: 4px; }
+  input, select, textarea {
+    width: 100%;
+    padding: 9px 12px;
+    border-radius: 8px;
+    border: 1px solid var(--border);
+    background: var(--bg);
+    color: var(--text);
+    font-size: 0.9rem;
+    font-family: inherit;
+  }
+  textarea { resize: vertical; min-height: 44px; }
+
+  .ocr-box {
+    border: 1px dashed var(--border);
+    border-radius: 10px;
+    padding: 14px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+  .ocr-box .status { font-size: 0.85rem; color: var(--muted); }
+  .thumb { max-height: 60px; border-radius: 6px; display: none; }
+
+  button {
+    cursor: pointer;
+    border: none;
+    border-radius: 8px;
+    padding: 9px 16px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    background: var(--accent);
+    color: #fff;
+  }
+  button.secondary { background: var(--accent-bg); color: var(--accent); }
+  button.ghost { background: transparent; color: var(--muted); border: 1px solid var(--border); font-weight: 500; }
+  button.danger { background: transparent; color: var(--danger); border: 1px solid var(--danger); font-weight: 500; padding: 5px 10px; font-size: 0.8rem; }
+  .form-actions { display: flex; gap: 10px; justify-content: flex-end; }
+
+  .group { margin-bottom: 18px; }
+  .group h3 { display: flex; align-items: center; font-size: 0.95rem; margin: 0 0 10px; }
+  .group h3 .sub { margin-left: auto; color: var(--muted); font-weight: 400; font-size: 0.85rem; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 12px; }
+  .item {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+  }
+  .item .ativo { font-weight: 600; margin-bottom: 2px; }
+  .item .meta { font-size: 0.8rem; color: var(--muted); margin-bottom: 8px; }
+  .item .valor { font-size: 1rem; font-weight: 600; margin-bottom: 8px; }
+  .item .actions { display: flex; gap: 8px; }
+  .item .actions button.ghost { padding: 5px 10px; font-size: 0.8rem; }
+
+  .toolbar { display: flex; gap: 10px; justify-content: flex-end; margin-top: 10px; }
+  .toolbar button { font-size: 0.8rem; padding: 7px 12px; }
+  #importFile { display: none; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Meus Investimentos</h1>
+  <div class="subtitle">Controle visual da carteira por categoria — os dados ficam salvos apenas neste navegador.</div>
+</header>
+
+<main>
+  <section class="card overview">
+    <div class="chart-wrap">
+      <canvas id="chart" width="260" height="260"></canvas>
+    </div>
+    <div>
+      <div id="totals" class="totals"></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <h2 id="formTitle">Novo investimento</h2>
+
+    <div class="ocr-box">
+      <img id="thumb" class="thumb" alt="preview" />
+      <input type="file" id="imageInput" accept="image/*" />
+      <button type="button" class="secondary" id="readImageBtn">Ler imagem</button>
+      <span class="status" id="ocrStatus">Envie um print (extrato, corretora, app do banco) para tentar preencher banco, data e valor automaticamente.</span>
+    </div>
+
+    <form id="investForm">
+      <div class="row">
+        <div>
+          <label for="categoria">Categoria</label>
+          <select id="categoria" required>
+            <option value="renda-fixa">Renda Fixa</option>
+            <option value="acoes">Ações</option>
+            <option value="fundos">Fundos</option>
+            <option value="cripto">Criptomoedas</option>
+            <option value="outros">Outros</option>
+          </select>
+        </div>
+        <div>
+          <label for="ativo">Ativo / descrição</label>
+          <input type="text" id="ativo" placeholder="Ex: Tesouro Selic, PETR4, Bitcoin" required />
+        </div>
+        <div>
+          <label for="banco">Banco / corretora</label>
+          <input type="text" id="banco" placeholder="Ex: Nubank, XP, Binance" list="bancosList" />
+          <datalist id="bancosList">
+            <option value="Banco do Brasil"></option>
+            <option value="Bradesco"></option>
+            <option value="Itaú"></option>
+            <option value="Santander"></option>
+            <option value="Caixa"></option>
+            <option value="Nubank"></option>
+            <option value="Inter"></option>
+            <option value="C6 Bank"></option>
+            <option value="BTG Pactual"></option>
+            <option value="XP Investimentos"></option>
+            <option value="Rico"></option>
+            <option value="Clear"></option>
+            <option value="Binance"></option>
+            <option value="Mercado Bitcoin"></option>
+            <option value="Foxbit"></option>
+          </datalist>
+        </div>
+        <div>
+          <label for="data">Data</label>
+          <input type="date" id="data" required />
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label for="valor">Valor (R$)</label>
+          <input type="number" id="valor" min="0" step="0.01" placeholder="0,00" required />
+        </div>
+        <div style="grid-column: span 3;">
+          <label for="observacoes">Observações (opcional)</label>
+          <input type="text" id="observacoes" placeholder="Ex: aporte mensal, resgate parcial..." />
+        </div>
+      </div>
+      <div class="form-actions">
+        <button type="button" class="ghost" id="cancelEditBtn" style="display:none;">Cancelar edição</button>
+        <button type="submit" id="submitBtn">Salvar investimento</button>
+      </div>
+    </form>
+  </section>
+
+  <section class="card">
+    <h2>Carteira</h2>
+    <div id="list"></div>
+    <div class="toolbar">
+      <input type="file" id="importFile" accept="application/json" />
+      <button type="button" class="ghost" id="importBtn">Importar backup</button>
+      <button type="button" class="ghost" id="exportBtn">Exportar backup</button>
+    </div>
+  </section>
+</main>
+
+<script>
+(function () {
+  'use strict';
+
+  var STORAGE_KEY = 'investimentos.v1';
+  var CATEGORIES = {
+    'renda-fixa': 'Renda Fixa',
+    'acoes': 'Ações',
+    'fundos': 'Fundos',
+    'cripto': 'Criptomoedas',
+    'outros': 'Outros'
+  };
+  var CATEGORY_VARS = {
+    'renda-fixa': '--renda-fixa',
+    'acoes': '--acoes',
+    'fundos': '--fundos',
+    'cripto': '--cripto',
+    'outros': '--outros'
+  };
+  var KNOWN_BANKS = [
+    'Banco do Brasil', 'Bradesco', 'Itaú', 'Itau', 'Santander', 'Caixa Econômica', 'Caixa',
+    'Nubank', 'Inter', 'C6 Bank', 'BTG Pactual', 'BTG', 'XP Investimentos', 'XP', 'Rico',
+    'Clear', 'Ágora', 'Agora', 'Toro', 'Easynvest', 'Modalmais', 'Genial', 'Órama', 'Orama',
+    'PicPay', 'Binance', 'Mercado Bitcoin', 'Foxbit', 'NuInvest', 'Sicredi', 'Sicoob', 'Safra'
+  ];
+
+  var editingId = null;
+
+  function loadItems() {
+    try {
+      return JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+    } catch (e) {
+      return [];
+    }
+  }
+  function saveItems(items) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+  }
+  function uid() {
+    return Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+  }
+  function formatBRL(value) {
+    return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  }
+  function formatDate(iso) {
+    var parts = iso.split('-');
+    return parts[2] + '/' + parts[1] + '/' + parts[0];
+  }
+  function colorFor(cat) {
+    return getComputedStyle(document.documentElement).getPropertyValue(CATEGORY_VARS[cat] || CATEGORY_VARS.outros).trim();
+  }
+
+  var chart = null;
+  function renderChart(items) {
+    var totalsByCat = {};
+    Object.keys(CATEGORIES).forEach(function (c) { totalsByCat[c] = 0; });
+    items.forEach(function (it) { totalsByCat[it.categoria] = (totalsByCat[it.categoria] || 0) + it.valor; });
+
+    var labels = [], data = [], colors = [];
+    Object.keys(CATEGORIES).forEach(function (c) {
+      if (totalsByCat[c] > 0) {
+        labels.push(CATEGORIES[c]);
+        data.push(totalsByCat[c]);
+        colors.push(colorFor(c));
+      }
+    });
+
+    var ctx = document.getElementById('chart').getContext('2d');
+    var total = data.reduce(function (a, b) { return a + b; }, 0);
+
+    if (chart) chart.destroy();
+
+    if (data.length === 0) {
+      document.getElementById('chart').style.display = 'none';
+      return;
+    }
+    document.getElementById('chart').style.display = 'block';
+
+    chart = new Chart(ctx, {
+      type: 'doughnut',
+      data: {
+        labels: labels,
+        datasets: [{ data: data, backgroundColor: colors, borderWidth: 2, borderColor: getComputedStyle(document.documentElement).getPropertyValue('--card').trim() }]
+      },
+      options: {
+        plugins: {
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: function (ctx) {
+                var pct = total ? (ctx.parsed / total * 100).toFixed(1) : 0;
+                return ctx.label + ': ' + formatBRL(ctx.parsed) + ' (' + pct + '%)';
+              }
+            }
+          }
+        }
+      }
+    });
+
+    var totalsEl = document.getElementById('totals');
+    totalsEl.innerHTML = '';
+    Object.keys(CATEGORIES).forEach(function (c) {
+      if (totalsByCat[c] <= 0) return;
+      var pct = total ? (totalsByCat[c] / total * 100).toFixed(1) : '0.0';
+      var row = document.createElement('div');
+      row.className = 'total-row';
+      row.innerHTML = '<span><span class="dot" style="background:' + colorFor(c) + '"></span>' + CATEGORIES[c] + '</span>' +
+        '<span>' + formatBRL(totalsByCat[c]) + ' &middot; ' + pct + '%</span>';
+      totalsEl.appendChild(row);
+    });
+    var totalRow = document.createElement('div');
+    totalRow.className = 'total-row';
+    totalRow.innerHTML = '<span>Total</span><span>' + formatBRL(total) + '</span>';
+    totalsEl.appendChild(totalRow);
+  }
+
+  function renderList(items) {
+    var listEl = document.getElementById('list');
+    listEl.innerHTML = '';
+
+    if (items.length === 0) {
+      listEl.innerHTML = '<div class="empty">Nenhum investimento cadastrado ainda.</div>';
+      return;
+    }
+
+    Object.keys(CATEGORIES).forEach(function (cat) {
+      var catItems = items.filter(function (it) { return it.categoria === cat; });
+      if (catItems.length === 0) return;
+
+      var subtotal = catItems.reduce(function (s, it) { return s + it.valor; }, 0);
+      var group = document.createElement('div');
+      group.className = 'group';
+      group.innerHTML = '<h3><span class="dot" style="background:' + colorFor(cat) + '"></span>' + CATEGORIES[cat] +
+        '<span class="sub">' + formatBRL(subtotal) + '</span></h3>';
+
+      var grid = document.createElement('div');
+      grid.className = 'grid';
+
+      catItems
+        .sort(function (a, b) { return b.data.localeCompare(a.data); })
+        .forEach(function (it) {
+          var card = document.createElement('div');
+          card.className = 'item';
+          card.innerHTML =
+            '<div class="ativo">' + escapeHtml(it.ativo) + '</div>' +
+            '<div class="meta">' + (it.banco ? escapeHtml(it.banco) + ' &middot; ' : '') + formatDate(it.data) + '</div>' +
+            '<div class="valor">' + formatBRL(it.valor) + '</div>' +
+            (it.observacoes ? '<div class="meta">' + escapeHtml(it.observacoes) + '</div>' : '') +
+            '<div class="actions">' +
+              '<button type="button" class="ghost" data-edit="' + it.id + '">Editar</button>' +
+              '<button type="button" class="danger" data-delete="' + it.id + '">Excluir</button>' +
+            '</div>';
+          grid.appendChild(card);
+        });
+
+      group.appendChild(grid);
+      listEl.appendChild(group);
+    });
+  }
+
+  function escapeHtml(str) {
+    var div = document.createElement('div');
+    div.textContent = str || '';
+    return div.innerHTML;
+  }
+
+  function render() {
+    var items = loadItems();
+    renderChart(items);
+    renderList(items);
+  }
+
+  function resetForm() {
+    editingId = null;
+    document.getElementById('investForm').reset();
+    document.getElementById('data').value = new Date().toISOString().slice(0, 10);
+    document.getElementById('formTitle').textContent = 'Novo investimento';
+    document.getElementById('submitBtn').textContent = 'Salvar investimento';
+    document.getElementById('cancelEditBtn').style.display = 'none';
+    document.getElementById('thumb').style.display = 'none';
+    document.getElementById('imageInput').value = '';
+    document.getElementById('ocrStatus').textContent = 'Envie um print (extrato, corretora, app do banco) para tentar preencher banco, data e valor automaticamente.';
+  }
+
+  document.getElementById('investForm').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var item = {
+      id: editingId || uid(),
+      categoria: document.getElementById('categoria').value,
+      ativo: document.getElementById('ativo').value.trim(),
+      banco: document.getElementById('banco').value.trim(),
+      data: document.getElementById('data').value,
+      valor: parseFloat(document.getElementById('valor').value),
+      observacoes: document.getElementById('observacoes').value.trim()
+    };
+    if (!item.ativo || !item.data || isNaN(item.valor) || item.valor < 0) return;
+
+    var items = loadItems();
+    if (editingId) {
+      items = items.map(function (it) { return it.id === editingId ? item : it; });
+    } else {
+      items.push(item);
+    }
+    saveItems(items);
+    resetForm();
+    render();
+  });
+
+  document.getElementById('cancelEditBtn').addEventListener('click', resetForm);
+
+  document.getElementById('list').addEventListener('click', function (e) {
+    var editId = e.target.getAttribute('data-edit');
+    var deleteId = e.target.getAttribute('data-delete');
+    if (editId) {
+      var item = loadItems().find(function (it) { return it.id === editId; });
+      if (!item) return;
+      editingId = item.id;
+      document.getElementById('categoria').value = item.categoria;
+      document.getElementById('ativo').value = item.ativo;
+      document.getElementById('banco').value = item.banco || '';
+      document.getElementById('data').value = item.data;
+      document.getElementById('valor').value = item.valor;
+      document.getElementById('observacoes').value = item.observacoes || '';
+      document.getElementById('formTitle').textContent = 'Editar investimento';
+      document.getElementById('submitBtn').textContent = 'Atualizar investimento';
+      document.getElementById('cancelEditBtn').style.display = 'inline-block';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+    if (deleteId) {
+      if (!confirm('Excluir este investimento?')) return;
+      var items = loadItems().filter(function (it) { return it.id !== deleteId; });
+      saveItems(items);
+      if (editingId === deleteId) resetForm();
+      render();
+    }
+  });
+
+  document.getElementById('exportBtn').addEventListener('click', function () {
+    var blob = new Blob([JSON.stringify(loadItems(), null, 2)], { type: 'application/json' });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement('a');
+    a.href = url;
+    a.download = 'investimentos-backup-' + new Date().toISOString().slice(0, 10) + '.json';
+    a.click();
+    URL.revokeObjectURL(url);
+  });
+
+  document.getElementById('importBtn').addEventListener('click', function () {
+    document.getElementById('importFile').click();
+  });
+  document.getElementById('importFile').addEventListener('change', function (e) {
+    var file = e.target.files[0];
+    if (!file) return;
+    var reader = new FileReader();
+    reader.onload = function () {
+      try {
+        var parsed = JSON.parse(reader.result);
+        if (!Array.isArray(parsed)) throw new Error('formato inválido');
+        if (!confirm('Importar ' + parsed.length + ' investimento(s)? Isso substitui os dados atuais.')) return;
+        saveItems(parsed);
+        render();
+      } catch (err) {
+        alert('Não foi possível ler o arquivo de backup.');
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = '';
+  });
+
+  // --- Leitura de imagem (OCR) ---
+
+  document.getElementById('imageInput').addEventListener('change', function (e) {
+    var file = e.target.files[0];
+    var thumb = document.getElementById('thumb');
+    if (!file) { thumb.style.display = 'none'; return; }
+    thumb.src = URL.createObjectURL(file);
+    thumb.style.display = 'inline-block';
+  });
+
+  document.getElementById('readImageBtn').addEventListener('click', function () {
+    var file = document.getElementById('imageInput').files[0];
+    var statusEl = document.getElementById('ocrStatus');
+    if (!file) {
+      statusEl.textContent = 'Selecione uma imagem primeiro.';
+      return;
+    }
+    statusEl.textContent = 'Lendo imagem... 0%';
+    Tesseract.recognize(file, 'por', {
+      logger: function (m) {
+        if (m.status === 'recognizing text') {
+          statusEl.textContent = 'Lendo imagem... ' + Math.round(m.progress * 100) + '%';
+        }
+      }
+    }).then(function (result) {
+      var text = result.data.text || '';
+      var found = extractFromText(text);
+      if (found.banco) document.getElementById('banco').value = found.banco;
+      if (found.data) document.getElementById('data').value = found.data;
+      if (found.valor != null) document.getElementById('valor').value = found.valor;
+
+      var achados = [];
+      if (found.banco) achados.push('banco');
+      if (found.data) achados.push('data');
+      if (found.valor != null) achados.push('valor');
+      statusEl.textContent = achados.length
+        ? 'Identificado automaticamente: ' + achados.join(', ') + '. Confira e complete o restante.'
+        : 'Não foi possível identificar dados na imagem. Preencha manualmente.';
+    }).catch(function () {
+      statusEl.textContent = 'Falha ao ler a imagem. Preencha manualmente.';
+    });
+  });
+
+  function extractFromText(text) {
+    var result = { banco: null, data: null, valor: null };
+
+    // Banco: procura por nomes conhecidos no texto reconhecido
+    var lower = text.toLowerCase();
+    for (var i = 0; i < KNOWN_BANKS.length; i++) {
+      if (lower.indexOf(KNOWN_BANKS[i].toLowerCase()) !== -1) {
+        result.banco = KNOWN_BANKS[i];
+        break;
+      }
+    }
+
+    // Data: dd/mm/yyyy, dd-mm-yyyy ou yyyy-mm-dd
+    var dateMatch = text.match(/(\d{2})[\/\-](\d{2})[\/\-](\d{4})/);
+    if (dateMatch) {
+      result.data = dateMatch[3] + '-' + dateMatch[2] + '-' + dateMatch[1];
+    } else {
+      var isoMatch = text.match(/(\d{4})-(\d{2})-(\d{2})/);
+      if (isoMatch) result.data = isoMatch[0];
+    }
+
+    // Valor: formato brasileiro, ex: R$ 1.234,56 — prioriza valores com "R$" na frente
+    var withCurrency = text.match(/R\$\s?(\d{1,3}(?:\.\d{3})*,\d{2})/);
+    var candidates = text.match(/\d{1,3}(?:\.\d{3})*,\d{2}/g);
+    var chosen = withCurrency ? withCurrency[1] : (candidates && candidates.length ? candidates.sort(function (a, b) {
+      return parseFloat(b.replace(/\./g, '').replace(',', '.')) - parseFloat(a.replace(/\./g, '').replace(',', '.'));
+    })[0] : null);
+    if (chosen) {
+      result.valor = parseFloat(chosen.replace(/\./g, '').replace(',', '.'));
+    }
+
+    return result;
+  }
+
+  resetForm();
+  render();
+})();
+</script>
+</body>
+</html>

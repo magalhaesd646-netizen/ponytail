@@ -2,7 +2,7 @@
 
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { normalizeResult, cleanEmpreendimentoName } = require('../src/lib/extractor');
+const { normalizeResult, cleanEmpreendimentoName, findKnownBuilder } = require('../src/lib/extractor');
 
 const knownBuilders = [
   { name: 'MRV Engenharia', aliases: ['mrv'], isAlsoIncorporadora: true },
@@ -44,6 +44,13 @@ test('normalizeResult retorna construtora nula quando não reconhece nenhuma bui
   assert.equal(result.construtora, null);
   assert.equal(result.incorporadora, null);
   assert.equal(result.construtoraIdentificada, false);
+});
+
+test('findKnownBuilder usa palavra inteira e não confunde "even" com "eventos"', () => {
+  const evenBuilder = [{ name: 'Even', aliases: ['even'], isAlsoIncorporadora: true }];
+  assert.equal(findKnownBuilder('SEPP RUN 2026 - Eventos de Pista e Campo', evenBuilder), null);
+  assert.equal(findKnownBuilder('Ingresso Digital - eventos em Jacareí', evenBuilder), null);
+  assert.deepEqual(findKnownBuilder('Novo empreendimento da Even em Jacareí', evenBuilder), evenBuilder[0]);
 });
 
 test('normalizeResult gera o mesmo id para a mesma cidade/fonte/url', () => {

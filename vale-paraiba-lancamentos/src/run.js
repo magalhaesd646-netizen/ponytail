@@ -18,7 +18,7 @@ const { findTechEmail } = require('./lib/emailFinder');
 const { sendDigest } = require('./lib/notifier');
 const { createAlertIssue } = require('./lib/githubIssue');
 const { fetchHtml } = require('./lib/http');
-const { textMentionsCity } = require('./lib/text');
+const { textMentionsCity, textMentionsRealEstateLaunch } = require('./lib/text');
 const state = require('./lib/state');
 
 // Padrão conservador o suficiente para caber no plano grátis do Tavily
@@ -65,11 +65,19 @@ function orderedCitiesForToday(cities, priorityCount = PRIORITY_CITY_COUNT) {
 }
 
 // Resultados de busca (não de portal, que já é escopado pela própria URL da
-// cidade) só entram se o título/trecho realmente citar a cidade — a busca
-// pode trazer algo por engano (ex.: uma cidade homônima em outro estado,
-// mesmo com o qualificador ", SP" na query), então checamos de novo aqui.
-function filterByCityMention(results, city) {
-  return results.filter((r) => textMentionsCity(`${r.title} ${r.snippet}`, city));
+// cidade) só entram se: 1) o título/trecho realmente citar a cidade — a
+// busca pode trazer algo por engano (ex.: uma cidade homônima em outro
+// estado, mesmo com o qualificador ", SP" na query); 2) o texto for
+// realmente sobre imóveis — sem isso, a busca por "lançamento" + cidade
+// também traz vaga de emprego, evento esportivo, previsão do tempo etc.,
+// porque a API não garante que a frase inteira da query apareça no
+// resultado.
+function filterRelevantResults(results, city) {
+  return results.filter(
+    (r) =>
+      textMentionsCity(`${r.title} ${r.snippet}`, city) &&
+      textMentionsRealEstateLaunch(`${r.title} ${r.snippet}`)
+  );
 }
 
 async function collectRawResultsForCity(city, budget) {
@@ -82,7 +90,7 @@ async function collectRawResultsForCity(city, budget) {
 
   if (budget.hasRoom()) {
     const webQuery = WEB_QUERY_TEMPLATE.replace('{cidade}', city);
-    const webResults = filterByCityMention(
+    const webResults = filterRelevantResults(
       await webSearch(webQuery, { recency: SEARCH_RECENCY }),
       city
     );
@@ -94,7 +102,7 @@ async function collectRawResultsForCity(city, budget) {
 
   if (budget.hasRoom()) {
     const officialQuery = OFFICIAL_SOURCES_QUERY_TEMPLATE.replace('{cidade}', city);
-    const officialResults = filterByCityMention(
+    const officialResults = filterRelevantResults(
       await webSearch(officialQuery, { domains: OFFICIAL_SOURCE_DOMAINS, recency: SEARCH_RECENCY }),
       city
     );
@@ -222,5 +230,5 @@ module.exports = {
   collectRawResultsForCity,
   makeQueryBudget,
   orderedCitiesForToday,
-  filterByCityMention,
+  filterRelevantResults,
 };

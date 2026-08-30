@@ -31,6 +31,48 @@ function textMentionsCity(text, city) {
   return normalizedText.includes(normalizedCity);
 }
 
+// Vocabulário que indica que o texto é mesmo sobre imóveis/lançamento —
+// sem isso, uma busca por "lançamento" + nome da cidade traz muita coisa
+// que não tem nada a ver (vaga de emprego, evento esportivo, previsão do
+// tempo, obituário...), porque a API de busca não garante que a frase
+// completa da query apareça no resultado.
+const REAL_ESTATE_KEYWORDS = [
+  'apartamento',
+  'imovel',
+  'imoveis',
+  'empreendimento',
+  'condominio',
+  'incorpora', // cobre incorporação/incorporadora/incorporador
+  'construtora',
+  'residencial',
+  'dormitorio',
+  'lote',
+  'banheiro',
+  'suite',
+  'unidades',
+  'metro quadrado',
+  'metros quadrados',
+  'na planta',
+  'lancamento imobiliario',
+];
+
+// Passa no filtro acima mas claramente não é um lançamento à venda —
+// aluguel/locação e vagas de emprego no setor imobiliário, por exemplo.
+const NON_LAUNCH_EXCLUDE_KEYWORDS = [
+  'aluguel',
+  'para alugar',
+  'locacao',
+  'vaga de emprego',
+  'curriculo',
+];
+
+function textMentionsRealEstateLaunch(text) {
+  if (!text) return false;
+  const normalized = normalizeText(text);
+  if (NON_LAUNCH_EXCLUDE_KEYWORDS.some((kw) => normalized.includes(kw))) return false;
+  return REAL_ESTATE_KEYWORDS.some((kw) => normalized.includes(kw));
+}
+
 function hashId(...parts) {
   return crypto.createHash('sha1').update(parts.join('|')).digest('hex');
 }
@@ -51,4 +93,11 @@ function extractEmails(text) {
   return out;
 }
 
-module.exports = { normalizeText, slugify, hashId, extractEmails, textMentionsCity };
+module.exports = {
+  normalizeText,
+  slugify,
+  hashId,
+  extractEmails,
+  textMentionsCity,
+  textMentionsRealEstateLaunch,
+};

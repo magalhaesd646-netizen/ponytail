@@ -123,10 +123,17 @@ Além disso:
   **realmente cita a cidade** buscada (`textMentionsCity`) — descarta
   qualquer coisa que a API tenha trazido por engano, mesmo com os filtros
   acima.
+- E confere também se o texto **é mesmo sobre imóveis**
+  (`textMentionsRealEstateLaunch`, em `src/lib/text.js`) — a API de busca
+  não garante que a frase inteira da query apareça no resultado, então uma
+  busca por "lançamento" + cidade também pode trazer vaga de emprego,
+  evento esportivo, previsão do tempo etc. Esse filtro exige vocabulário
+  imobiliário (apartamento, condomínio, incorporadora...) e descarta
+  aluguel/locação, já que o foco aqui é lançamento (venda), não aluguel.
 
 Nenhum desses filtros é 100% garantido (busca por palavra-chave sempre tem
 alguma margem de erro), mas juntos reduzem bastante os falsos positivos de
-cidade/estado errado e de lançamentos velhos.
+cidade/estado errado, conteúdo sem relação com imóveis e lançamentos velhos.
 
 ## Limitações importantes (leia antes de confiar 100% no alerta)
 

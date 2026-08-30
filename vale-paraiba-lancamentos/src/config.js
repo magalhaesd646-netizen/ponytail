@@ -73,7 +73,7 @@ const WEB_QUERY_TEMPLATE =
 // agregadores genéricos — e também cobre posts públicos de Instagram/
 // Facebook (sem login nem scraping direto dessas redes, ver README).
 const OFFICIAL_SOURCES_QUERY_TEMPLATE =
-  '(lançamento OR "novo empreendimento" OR "breve lançamento") "{cidade}, SP"';
+  '("lançamento imobiliário" OR "novo empreendimento" OR "breve lançamento" OR "apartamentos na planta") "{cidade}, SP"';
 
 const SOCIAL_SITE_DOMAINS = ['instagram.com', 'facebook.com'];
 

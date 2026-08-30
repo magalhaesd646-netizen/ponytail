@@ -155,8 +155,8 @@
     <div class="ocr-box">
       <img id="thumb" class="thumb" alt="preview" />
       <input type="file" id="imageInput" accept="image/*" />
-      <button type="button" class="secondary" id="readImageBtn">Ler novamente</button>
-      <span class="status" id="ocrStatus">Escolha um print (extrato, posição em ações, aporte, saldo da corretora...) — a leitura roda sozinha assim que a imagem é selecionada, e o lançamento é feito automaticamente quando dá pra identificar o ativo e o valor.</span>
+      <button type="button" id="readImageBtn">Extrair dados</button>
+      <span class="status" id="ocrStatus">Escolha um print (extrato, posição em ações, aporte, saldo da corretora...) e clique em "Extrair dados". Os campos abaixo são preenchidos automaticamente — revise e edite antes de salvar.</span>
     </div>
 
     <form id="investForm">
@@ -420,7 +420,7 @@
     document.getElementById('cancelEditBtn').style.display = 'none';
     document.getElementById('thumb').style.display = 'none';
     document.getElementById('imageInput').value = '';
-    document.getElementById('ocrStatus').textContent = 'Escolha um print (extrato, posição em ações, aporte, saldo da corretora...) — a leitura roda sozinha assim que a imagem é selecionada, e o lançamento é feito automaticamente quando dá pra identificar o ativo e o valor.';
+    document.getElementById('ocrStatus').textContent = 'Escolha um print (extrato, posição em ações, aporte, saldo da corretora...) e clique em "Extrair dados". Os campos abaixo são preenchidos automaticamente — revise e edite antes de salvar.';
   }
 
   document.getElementById('investForm').addEventListener('submit', function (e) {
@@ -581,7 +581,7 @@
     if (!file) { thumb.style.display = 'none'; return; }
     thumb.src = URL.createObjectURL(file);
     thumb.style.display = 'inline-block';
-    processImage(file);
+    document.getElementById('ocrStatus').textContent = 'Imagem selecionada. Clique em "Extrair dados" para preencher os campos.';
   });
 
   document.getElementById('readImageBtn').addEventListener('click', function () {
@@ -621,14 +621,7 @@
       if (classified.ativo && !ativoEl.value) ativoEl.value = classified.ativo;
 
       if (classified.resumo) {
-        statusEl.textContent = 'Esse print parece ser um resumo total da carteira, não um ativo específico — não lancei automaticamente. Confira os valores e separe por categoria antes de salvar.';
-        return;
-      }
-
-      if (ativoEl.value && valorEl.value) {
-        var resumoLancamento = ativoEl.value + ' — ' + formatBRL(parseFloat(valorEl.value)) + ' (' + CATEGORIES[document.getElementById('categoria').value] + ')';
-        document.getElementById('investForm').requestSubmit();
-        statusEl.textContent = 'Lançado automaticamente: ' + resumoLancamento + '. Não era isso? Edite ou exclua na lista abaixo.';
+        statusEl.textContent = 'Esse print parece ser um resumo total da carteira, não um ativo específico. Confira os valores e escolha a categoria certa antes de salvar.';
         return;
       }
 

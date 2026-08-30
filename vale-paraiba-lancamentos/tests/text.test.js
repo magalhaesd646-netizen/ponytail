@@ -59,3 +59,8 @@ test('textMentionsRealEstateLaunch rejeita aluguel/locação mesmo citando apart
   assert.equal(textMentionsRealEstateLaunch('Apartamento 3 dormitórios para alugar em Jacareí'), false);
   assert.equal(textMentionsRealEstateLaunch('Imóvel disponível para locação'), false);
 });
+
+test('textMentionsRealEstateLaunch rejeita vaga de emprego mesmo citando incorporação', () => {
+  assert.equal(textMentionsRealEstateLaunch('Gerente de Incorporação e Novos Negócios'), false);
+  assert.equal(textMentionsRealEstateLaunch('Analista de Construtora - vaga em Pindamonhangaba'), false);
+});

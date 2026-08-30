@@ -526,6 +526,7 @@
     'cdb', 'lci', 'lca', 'rdb', 'debênture', 'debenture', 'poupança', 'poupanca'
   ];
   var FUNDOS_KEYWORDS = ['fundo de investimento', 'fundo imobiliário', 'fundo imobiliario', 'multimercado', 'fic fia', 'fic fim'];
+  var ACOES_KEYWORDS = ['renda variável', 'renda variavel', 'home broker', 'ordem de compra'];
   var RESUMO_KEYWORDS = [
     'patrimônio total', 'patrimonio total', 'saldo consolidado', 'carteira total',
     'resumo da carteira', 'extrato consolidado', 'posição consolidada', 'posicao consolidada'
@@ -556,6 +557,12 @@
     if (tickerMatch) {
       var isFii = /11$/.test(tickerMatch[0]);
       return { categoria: isFii ? 'fundos' : 'acoes', ativo: tickerMatch[0], resumo: resumo };
+    }
+
+    for (var k = 0; k < ACOES_KEYWORDS.length; k++) {
+      if (hasWord(lower, ACOES_KEYWORDS[k])) {
+        return { categoria: 'acoes', ativo: null, resumo: resumo };
+      }
     }
 
     for (var i = 0; i < RENDA_FIXA_KEYWORDS.length; i++) {
@@ -593,6 +600,47 @@
     processImage(file);
   });
 
+  // Prints de apps de investimento costumam ter tema escuro (texto claro sobre
+  // fundo quase preto), o que confunde o OCR — ele espera texto escuro sobre
+  // fundo claro. Aqui a imagem vira escala de cinza, é invertida quando é
+  // predominantemente escura e ganha mais contraste antes de ir pro Tesseract.
+  function preprocessImage(file) {
+    return new Promise(function (resolve) {
+      var img = new Image();
+      img.onload = function () {
+        var canvas = document.createElement('canvas');
+        canvas.width = img.naturalWidth;
+        canvas.height = img.naturalHeight;
+        var ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0);
+        try {
+          var imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          var data = imageData.data;
+          var sum = 0;
+          var i;
+          for (i = 0; i < data.length; i += 4) {
+            sum += 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+          }
+          var avg = sum / (data.length / 4);
+          var dark = avg < 128;
+          for (i = 0; i < data.length; i += 4) {
+            var gray = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+            if (dark) gray = 255 - gray;
+            gray = Math.min(255, Math.max(0, (gray - 128) * 1.4 + 128));
+            data[i] = data[i + 1] = data[i + 2] = gray;
+          }
+          ctx.putImageData(imageData, 0, 0);
+        } catch (e) {
+          resolve(file);
+          return;
+        }
+        canvas.toBlob(function (blob) { resolve(blob || file); }, 'image/png');
+      };
+      img.onerror = function () { resolve(file); };
+      img.src = URL.createObjectURL(file);
+    });
+  }
+
   function processImage(file) {
     var statusEl = document.getElementById('ocrStatus');
     if (typeof Tesseract === 'undefined') {
@@ -600,12 +648,14 @@
       return;
     }
     statusEl.textContent = 'Lendo imagem... 0%';
-    Tesseract.recognize(file, 'por', {
-      logger: function (m) {
-        if (m.status === 'recognizing text') {
-          statusEl.textContent = 'Lendo imagem... ' + Math.round(m.progress * 100) + '%';
+    preprocessImage(file).then(function (source) {
+      return Tesseract.recognize(source, 'por', {
+        logger: function (m) {
+          if (m.status === 'recognizing text') {
+            statusEl.textContent = 'Lendo imagem... ' + Math.round(m.progress * 100) + '%';
+          }
         }
-      }
+      });
     }).then(function (result) {
       var text = result.data.text || '';
       var found = extractFromText(text);

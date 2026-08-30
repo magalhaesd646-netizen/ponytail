@@ -13,6 +13,7 @@ const google = require('./googleSearch');
  * @param {object} [opts]
  * @param {string[]} [opts.domains] restringe a busca a esses domínios
  * @param {number} [opts.num]
+ * @param {'day'|'week'|'month'|'year'} [opts.recency] só conteúdo recente
  */
 async function webSearch(query, opts = {}) {
   if (tavily.hasCredentials()) {
@@ -22,7 +23,7 @@ async function webSearch(query, opts = {}) {
     const finalQuery = opts.domains && opts.domains.length
       ? `(${opts.domains.map((d) => `site:${d}`).join(' OR ')}) ${query}`
       : query;
-    return google.googleSearch(finalQuery, { num: opts.num });
+    return google.googleSearch(finalQuery, { num: opts.num, recency: opts.recency });
   }
   return [];
 }

@@ -24,6 +24,9 @@ function hasCredentials() {
  * @param {object} [opts]
  * @param {string[]} [opts.domains] restringe a busca a esses domínios
  * @param {number} [opts.num] número de resultados
+ * @param {'day'|'week'|'month'|'year'} [opts.recency] só conteúdo indexado
+ *   dentro dessa janela — evita lançamentos antigos que já podem nem estar
+ *   mais à venda
  * @returns {Promise<Array<{title: string, link: string, snippet: string}>>}
  */
 async function tavilySearch(query, opts = {}) {
@@ -46,6 +49,9 @@ async function tavilySearch(query, opts = {}) {
   };
   if (opts.domains && opts.domains.length) {
     body.include_domains = opts.domains;
+  }
+  if (opts.recency) {
+    body.time_range = opts.recency;
   }
 
   try {

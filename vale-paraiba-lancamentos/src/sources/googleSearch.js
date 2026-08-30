@@ -18,11 +18,21 @@ function hasCredentials() {
   return Boolean(process.env.GOOGLE_API_KEY && process.env.GOOGLE_CSE_ID);
 }
 
+const RECENCY_TO_DATE_RESTRICT = {
+  day: 'd1',
+  week: 'w1',
+  month: 'm1',
+  year: 'y1',
+};
+
 /**
  * @param {string} query texto da busca (restrição por domínio, se houver, já
  *   deve vir embutida na query como operador site: — ver src/sources/webSearch.js)
  * @param {object} [opts]
  * @param {number} [opts.num] número de resultados (máx. 10 por página na API)
+ * @param {'day'|'week'|'month'|'year'} [opts.recency] só conteúdo indexado
+ *   dentro dessa janela — evita lançamentos antigos que já podem nem estar
+ *   mais à venda
  * @returns {Promise<Array<{title: string, link: string, snippet: string}>>}
  */
 async function googleSearch(query, opts = {}) {
@@ -44,6 +54,9 @@ async function googleSearch(query, opts = {}) {
     gl: 'br',
     hl: 'pt-BR',
   };
+  if (opts.recency && RECENCY_TO_DATE_RESTRICT[opts.recency]) {
+    params.dateRestrict = RECENCY_TO_DATE_RESTRICT[opts.recency];
+  }
 
   try {
     const { data } = await axios.get(ENDPOINT, { params, timeout: 10000 });

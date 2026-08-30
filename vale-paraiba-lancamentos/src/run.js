@@ -4,7 +4,13 @@ require('dotenv').config();
 
 const fs = require('fs');
 const path = require('path');
-const { CITIES, WEB_QUERY_TEMPLATE, SOCIAL_QUERY_TEMPLATE, SOCIAL_SITE_DOMAINS } = require('./config');
+const {
+  CITIES,
+  WEB_QUERY_TEMPLATE,
+  OFFICIAL_SOURCES_QUERY_TEMPLATE,
+  OFFICIAL_SOURCE_DOMAINS,
+  SEARCH_RECENCY,
+} = require('./config');
 const { webSearch } = require('./sources/webSearch');
 const { searchPortalsForCity } = require('./sources/portalScraper');
 const { normalizeResult, loadKnownBuilders, findKnownBuilder } = require('./lib/extractor');
@@ -12,6 +18,7 @@ const { findTechEmail } = require('./lib/emailFinder');
 const { sendDigest } = require('./lib/notifier');
 const { createAlertIssue } = require('./lib/githubIssue');
 const { fetchHtml } = require('./lib/http');
+const { textMentionsCity } = require('./lib/text');
 const state = require('./lib/state');
 
 // Padrão conservador o suficiente para caber no plano grátis do Tavily
@@ -25,8 +32,9 @@ function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-// Cada cidade consome até 2 buscas (web + redes sociais); o orçamento
-// garante que nunca estouramos a cota gratuita do provedor configurado
+// Cada cidade consome até 2 buscas (web geral + fontes oficiais/redes
+// sociais); o orçamento garante que nunca estouramos a cota gratuita do
+// provedor configurado
 // (Tavily ou Google), mesmo com todas as cidades do Vale do Paraíba
 // configuradas. Sem nenhum provedor configurado, essas buscas são puladas e
 // o app funciona só com os portais públicos (modo zero-config).
@@ -56,6 +64,14 @@ function orderedCitiesForToday(cities, priorityCount = PRIORITY_CITY_COUNT) {
   return [...priority, ...rotated];
 }
 
+// Resultados de busca (não de portal, que já é escopado pela própria URL da
+// cidade) só entram se o título/trecho realmente citar a cidade — a busca
+// pode trazer algo por engano (ex.: uma cidade homônima em outro estado,
+// mesmo com o qualificador ", SP" na query), então checamos de novo aqui.
+function filterByCityMention(results, city) {
+  return results.filter((r) => textMentionsCity(`${r.title} ${r.snippet}`, city));
+}
+
 async function collectRawResultsForCity(city, budget) {
   const raw = [];
 
@@ -66,7 +82,10 @@ async function collectRawResultsForCity(city, budget) {
 
   if (budget.hasRoom()) {
     const webQuery = WEB_QUERY_TEMPLATE.replace('{cidade}', city);
-    const webResults = await webSearch(webQuery);
+    const webResults = filterByCityMention(
+      await webSearch(webQuery, { recency: SEARCH_RECENCY }),
+      city
+    );
     budget.consume();
     for (const r of webResults) {
       raw.push({ ...r, city, sourceType: 'web-search', sourceLabel: 'Busca web' });
@@ -74,11 +93,14 @@ async function collectRawResultsForCity(city, budget) {
   }
 
   if (budget.hasRoom()) {
-    const socialQuery = SOCIAL_QUERY_TEMPLATE.replace('{cidade}', city);
-    const socialResults = await webSearch(socialQuery, { domains: SOCIAL_SITE_DOMAINS });
+    const officialQuery = OFFICIAL_SOURCES_QUERY_TEMPLATE.replace('{cidade}', city);
+    const officialResults = filterByCityMention(
+      await webSearch(officialQuery, { domains: OFFICIAL_SOURCE_DOMAINS, recency: SEARCH_RECENCY }),
+      city
+    );
     budget.consume();
-    for (const r of socialResults) {
-      raw.push({ ...r, city, sourceType: 'web-search-social', sourceLabel: 'Busca web (Instagram/Facebook)' });
+    for (const r of officialResults) {
+      raw.push({ ...r, city, sourceType: 'official-sources', sourceLabel: 'Sites oficiais / redes sociais' });
     }
   }
 
@@ -195,4 +217,10 @@ if (require.main === module) {
   });
 }
 
-module.exports = { main, collectRawResultsForCity, makeQueryBudget, orderedCitiesForToday };
+module.exports = {
+  main,
+  collectRawResultsForCity,
+  makeQueryBudget,
+  orderedCitiesForToday,
+  filterByCityMention,
+};

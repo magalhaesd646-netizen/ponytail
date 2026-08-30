@@ -155,8 +155,8 @@
     <div class="ocr-box">
       <img id="thumb" class="thumb" alt="preview" />
       <input type="file" id="imageInput" accept="image/*" />
-      <button type="button" class="secondary" id="readImageBtn">Ler imagem</button>
-      <span class="status" id="ocrStatus">Envie um print (extrato, corretora, app do banco) para tentar preencher banco, data e valor automaticamente.</span>
+      <button type="button" class="secondary" id="readImageBtn">Ler novamente</button>
+      <span class="status" id="ocrStatus">Escolha um print (extrato, posição em ações, aporte, saldo da corretora...) — a leitura roda sozinha assim que a imagem é selecionada, e o lançamento é feito automaticamente quando dá pra identificar o ativo e o valor.</span>
     </div>
 
     <form id="investForm">
@@ -356,6 +356,8 @@
       return;
     }
 
+    var totalGeral = items.reduce(function (s, it) { return s + it.valor; }, 0);
+
     Object.keys(CATEGORIES).forEach(function (cat) {
       var catItems = items.filter(function (it) { return it.categoria === cat; });
       if (catItems.length === 0) return;
@@ -372,12 +374,14 @@
       catItems
         .sort(function (a, b) { return b.data.localeCompare(a.data); })
         .forEach(function (it) {
+          var posicao = totalGeral ? (it.valor / totalGeral * 100).toFixed(1) + '% da carteira' : '';
           var card = document.createElement('div');
           card.className = 'item';
           card.innerHTML =
             '<div class="ativo">' + escapeHtml(it.ativo) + '</div>' +
             '<div class="meta">' + (it.banco ? escapeHtml(it.banco) + ' &middot; ' : '') + formatDate(it.data) + '</div>' +
             '<div class="valor">' + formatBRL(it.valor) + '</div>' +
+            (posicao ? '<div class="meta">' + posicao + '</div>' : '') +
             (it.observacoes ? '<div class="meta">' + escapeHtml(it.observacoes) + '</div>' : '') +
             '<div class="actions">' +
               '<button type="button" class="ghost" data-edit="' + it.id + '">Editar</button>' +
@@ -416,7 +420,7 @@
     document.getElementById('cancelEditBtn').style.display = 'none';
     document.getElementById('thumb').style.display = 'none';
     document.getElementById('imageInput').value = '';
-    document.getElementById('ocrStatus').textContent = 'Envie um print (extrato, corretora, app do banco) para tentar preencher banco, data e valor automaticamente.';
+    document.getElementById('ocrStatus').textContent = 'Escolha um print (extrato, posição em ações, aporte, saldo da corretora...) — a leitura roda sozinha assim que a imagem é selecionada, e o lançamento é feito automaticamente quando dá pra identificar o ativo e o valor.';
   }
 
   document.getElementById('investForm').addEventListener('submit', function (e) {
@@ -506,21 +510,91 @@
 
   // --- Leitura de imagem (OCR) ---
 
+  var CRYPTO_NAMES = {
+    'bitcoin': 'Bitcoin', 'btc': 'Bitcoin',
+    'ethereum': 'Ethereum', 'eth': 'Ethereum',
+    'solana': 'Solana', 'sol': 'Solana',
+    'cardano': 'Cardano', 'ada': 'Cardano',
+    'dogecoin': 'Dogecoin', 'doge': 'Dogecoin',
+    'ripple': 'XRP', 'xrp': 'XRP',
+    'litecoin': 'Litecoin', 'ltc': 'Litecoin',
+    'tether': 'Tether', 'usdt': 'Tether',
+    'binance coin': 'BNB', 'bnb': 'BNB'
+  };
+  var RENDA_FIXA_KEYWORDS = [
+    'tesouro selic', 'tesouro ipca', 'tesouro prefixado', 'tesouro direto',
+    'cdb', 'lci', 'lca', 'rdb', 'debênture', 'debenture', 'poupança', 'poupanca'
+  ];
+  var FUNDOS_KEYWORDS = ['fundo de investimento', 'fundo imobiliário', 'fundo imobiliario', 'multimercado', 'fic fia', 'fic fim'];
+  var RESUMO_KEYWORDS = [
+    'patrimônio total', 'patrimonio total', 'saldo consolidado', 'carteira total',
+    'resumo da carteira', 'extrato consolidado', 'posição consolidada', 'posicao consolidada'
+  ];
+
+  // Tenta identificar categoria e ativo a partir do texto do print: um ticker
+  // de ação/FII da B3 (ex: PETR4, HGLG11), um nome de criptomoeda ou palavras-chave
+  // de renda fixa/fundos. Também sinaliza prints de resumo total da carteira,
+  // que não devem ser lançados automaticamente numa única categoria.
+  // Confere se `term` aparece em `lower` como palavra isolada (não como
+  // substring de outra palavra — ex: "sol" não deve casar dentro de "solução",
+  // nem "ada" dentro de "embaralhada"). Importante para os códigos curtos de
+  // cripto (btc, eth, sol, ada...), fáceis de aparecer por acaso em texto solto.
+  function hasWord(lower, term) {
+    var escaped = term.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    return new RegExp('(?:^|[^a-zà-ÿ0-9])' + escaped + '(?:$|[^a-zà-ÿ0-9])', 'i').test(lower);
+  }
+
+  function classifyFromText(text) {
+    var lower = text.toLowerCase();
+    var resumo = RESUMO_KEYWORDS.some(function (k) { return hasWord(lower, k); });
+
+    for (var key in CRYPTO_NAMES) {
+      if (hasWord(lower, key)) return { categoria: 'cripto', ativo: CRYPTO_NAMES[key], resumo: resumo };
+    }
+
+    var tickerMatch = text.match(/\b[A-Z]{4}\d{1,2}\b/);
+    if (tickerMatch) {
+      var isFii = /11$/.test(tickerMatch[0]);
+      return { categoria: isFii ? 'fundos' : 'acoes', ativo: tickerMatch[0], resumo: resumo };
+    }
+
+    for (var i = 0; i < RENDA_FIXA_KEYWORDS.length; i++) {
+      if (hasWord(lower, RENDA_FIXA_KEYWORDS[i])) {
+        return { categoria: 'renda-fixa', ativo: titleCase(RENDA_FIXA_KEYWORDS[i]), resumo: resumo };
+      }
+    }
+    for (var j = 0; j < FUNDOS_KEYWORDS.length; j++) {
+      if (hasWord(lower, FUNDOS_KEYWORDS[j])) {
+        return { categoria: 'fundos', ativo: null, resumo: resumo };
+      }
+    }
+    return { categoria: null, ativo: null, resumo: resumo };
+  }
+
+  function titleCase(str) {
+    return str.replace(/\b\w/g, function (c) { return c.toUpperCase(); });
+  }
+
   document.getElementById('imageInput').addEventListener('change', function (e) {
     var file = e.target.files[0];
     var thumb = document.getElementById('thumb');
     if (!file) { thumb.style.display = 'none'; return; }
     thumb.src = URL.createObjectURL(file);
     thumb.style.display = 'inline-block';
+    processImage(file);
   });
 
   document.getElementById('readImageBtn').addEventListener('click', function () {
     var file = document.getElementById('imageInput').files[0];
-    var statusEl = document.getElementById('ocrStatus');
     if (!file) {
-      statusEl.textContent = 'Selecione uma imagem primeiro.';
+      document.getElementById('ocrStatus').textContent = 'Selecione uma imagem primeiro.';
       return;
     }
+    processImage(file);
+  });
+
+  function processImage(file) {
+    var statusEl = document.getElementById('ocrStatus');
     if (typeof Tesseract === 'undefined') {
       statusEl.textContent = 'Leitor de imagem indisponível (sem conexão com a internet). Preencha manualmente.';
       return;
@@ -535,21 +609,42 @@
     }).then(function (result) {
       var text = result.data.text || '';
       var found = extractFromText(text);
+      var classified = classifyFromText(text);
+
+      var ativoEl = document.getElementById('ativo');
+      var valorEl = document.getElementById('valor');
+
       if (found.banco) document.getElementById('banco').value = found.banco;
       if (found.data) document.getElementById('data').value = found.data;
-      if (found.valor != null) document.getElementById('valor').value = found.valor;
+      if (found.valor != null) valorEl.value = found.valor;
+      if (classified.categoria) document.getElementById('categoria').value = classified.categoria;
+      if (classified.ativo && !ativoEl.value) ativoEl.value = classified.ativo;
+
+      if (classified.resumo) {
+        statusEl.textContent = 'Esse print parece ser um resumo total da carteira, não um ativo específico — não lancei automaticamente. Confira os valores e separe por categoria antes de salvar.';
+        return;
+      }
+
+      if (ativoEl.value && valorEl.value) {
+        var resumoLancamento = ativoEl.value + ' — ' + formatBRL(parseFloat(valorEl.value)) + ' (' + CATEGORIES[document.getElementById('categoria').value] + ')';
+        document.getElementById('investForm').requestSubmit();
+        statusEl.textContent = 'Lançado automaticamente: ' + resumoLancamento + '. Não era isso? Edite ou exclua na lista abaixo.';
+        return;
+      }
 
       var achados = [];
+      if (classified.categoria) achados.push('categoria');
+      if (classified.ativo) achados.push('ativo');
       if (found.banco) achados.push('banco');
       if (found.data) achados.push('data');
       if (found.valor != null) achados.push('valor');
       statusEl.textContent = achados.length
-        ? 'Identificado automaticamente: ' + achados.join(', ') + '. Confira e complete o restante.'
+        ? 'Identificado automaticamente: ' + achados.join(', ') + '. Complete o restante e salve.'
         : 'Não foi possível identificar dados na imagem. Preencha manualmente.';
     }).catch(function () {
       statusEl.textContent = 'Falha ao ler a imagem. Preencha manualmente.';
     });
-  });
+  }
 
   function extractFromText(text) {
     var result = { banco: null, data: null, valor: null };

@@ -34,7 +34,14 @@ ver abaixo), o app roda sozinho todo dia:
   nada.
 - Publica um **painel web** (`web/index.html`) no GitHub Pages, com busca,
   filtro por cidade e destaque para os lançamentos novos — dá pra checar
-  quando quiser, sem esperar o e-mail.
+  quando quiser, sem esperar o e-mail. O painel tem duas abas: **Lançamentos**
+  (os dados coletados pelo monitor) e **🏢 Maiores Construtoras (SP)** — uma
+  lista curada, com base em rankings públicos do setor (Ranking INTEC, Top
+  Imobiliário, Econodata), das maiores construtoras/incorporadoras que atuam
+  no estado de São Paulo, com site oficial e canal de contato (e-mail ou
+  portal de fornecedores) de cada uma. Essa lista é estática — mantida em
+  `web/top-construtoras-sp.json` — e não é gerada automaticamente pelo
+  monitor.
 
 ### Passo único: habilitar o GitHub Pages
 

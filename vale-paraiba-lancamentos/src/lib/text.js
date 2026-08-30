@@ -2,15 +2,33 @@
 
 const crypto = require('crypto');
 
-function slugify(value) {
+// Minúsculas, sem acentos, espaços colapsados — base para comparações
+// tolerantes a acento/maiúscula (slugify, matching de cidade, etc.).
+function normalizeText(value) {
   return value
     .normalize('NFD')
     .replace(/[̀-ͯ]/g, '') // remove acentos (marcas combinantes pós-NFD)
     .toLowerCase()
     .trim()
+    .replace(/\s+/g, ' ');
+}
+
+function slugify(value) {
+  return normalizeText(value)
     .replace(/[^a-z0-9\s-]/g, '')
     .replace(/\s+/g, '-')
     .replace(/-+/g, '-');
+}
+
+// Verifica se o texto (título + trecho de um resultado de busca) realmente
+// menciona a cidade buscada — usado para descartar resultados que a busca
+// trouxe por engano (ex.: uma cidade homônima em outro estado, ou uma
+// página genérica que só cita o nome de leve).
+function textMentionsCity(text, city) {
+  if (!text || !city) return false;
+  const normalizedText = normalizeText(text);
+  const normalizedCity = normalizeText(city);
+  return normalizedText.includes(normalizedCity);
 }
 
 function hashId(...parts) {
@@ -33,4 +51,4 @@ function extractEmails(text) {
   return out;
 }
 
-module.exports = { slugify, hashId, extractEmails };
+module.exports = { normalizeText, slugify, hashId, extractEmails, textMentionsCity };

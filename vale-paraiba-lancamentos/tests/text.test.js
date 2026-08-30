@@ -2,7 +2,7 @@
 
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { slugify, hashId, extractEmails } = require('../src/lib/text');
+const { slugify, hashId, extractEmails, textMentionsCity } = require('../src/lib/text');
 
 test('slugify remove acentos e espaços', () => {
   assert.equal(slugify('São José dos Campos'), 'sao-jose-dos-campos');
@@ -22,4 +22,16 @@ test('extractEmails encontra e-mails únicos e ignora falsos positivos de imagem
   `;
   const emails = extractEmails(html);
   assert.deepEqual(emails.sort(), ['compras@construtora.com.br', 'suprimentos@construtora.com.br'].sort());
+});
+
+test('textMentionsCity é tolerante a acento/maiúscula e detecta a cidade certa', () => {
+  assert.equal(textMentionsCity('Lançamento em São José dos Campos, SP', 'São José dos Campos'), true);
+  assert.equal(textMentionsCity('LANÇAMENTO EM SAO JOSE DOS CAMPOS', 'São José dos Campos'), true);
+  assert.equal(textMentionsCity('novo empreendimento em taubate - sp', 'Taubaté'), true);
+});
+
+test('textMentionsCity retorna false quando a cidade não aparece no texto', () => {
+  assert.equal(textMentionsCity('Lançamento em Curitiba, PR', 'Cruzeiro'), false);
+  assert.equal(textMentionsCity('', 'Taubaté'), false);
+  assert.equal(textMentionsCity('Lançamento em Taubaté', ''), false);
 });

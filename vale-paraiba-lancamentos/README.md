@@ -95,15 +95,38 @@ Para Gmail, gere a senha de app em
 [myaccount.google.com/apppasswords](https://myaccount.google.com/apppasswords)
 (precisa de verificação em duas etapas ativada na conta).
 
-## Por que não faz login/scraping direto no Instagram e Facebook
+## Como a busca tenta ser precisa
 
-Fazer scraping autenticado dessas redes (logando com uma conta pessoal para
-raspar páginas de empresas) viola os termos de uso da Meta, é tecnicamente
-frágil (bloqueios, captchas, mudanças de layout) e pode banir a conta usada.
-Com o Tavily ou o Google ativado, o app restringe a busca aos domínios
-`instagram.com`/`facebook.com` para achar posts **públicos** dessas redes já
-indexados — mais estável, porém também mais limitado (nem todo post é
-indexado).
+Com o Tavily ou o Google ativado, cada cidade é pesquisada duas vezes:
+
+1. **Busca web geral** — termos como "lançamento imobiliário", "pré-
+   lançamento" etc., sempre com o qualificador **", SP"** junto do nome da
+   cidade (ex.: `"Taubaté, SP"`). Vários municípios do Vale do Paraíba têm
+   nomes comuns a cidades de outros estados (ex.: existe um "Cruzeiro" em
+   várias unidades da federação) — sem esse qualificador, a busca já trouxe
+   lançamentos de outros estados por engano.
+2. **Sites oficiais + redes sociais** — restringida (`include_domains`) aos
+   sites das construtoras/incorporadoras conhecidas em
+   [`data/known-builders.json`](./data/known-builders.json) e a
+   `instagram.com`/`facebook.com`. É lá que as próprias empresas anunciam os
+   lançamentos, com informação mais confiável do que agregadores genéricos.
+   Não fazemos login nem scraping direto do Instagram/Facebook (violaria os
+   termos de uso da Meta e é tecnicamente frágil) — só restringimos a busca
+   a posts **públicos** dessas redes já indexados.
+
+Além disso:
+
+- As duas buscas usam filtro de **recência** (`SEARCH_RECENCY` em
+  `src/config.js`, padrão `year`) para evitar lançamentos antigos (ex.: de
+  2025) que já podem nem estar mais à venda.
+- Depois de cada busca, o app confere se o título/trecho do resultado
+  **realmente cita a cidade** buscada (`textMentionsCity`) — descarta
+  qualquer coisa que a API tenha trazido por engano, mesmo com os filtros
+  acima.
+
+Nenhum desses filtros é 100% garantido (busca por palavra-chave sempre tem
+alguma margem de erro), mas juntos reduzem bastante os falsos positivos de
+cidade/estado errado e de lançamentos velhos.
 
 ## Limitações importantes (leia antes de confiar 100% no alerta)
 
@@ -114,7 +137,13 @@ indexado).
   ou o Google ativado. Complete
   [`data/known-builders.json`](./data/known-builders.json) com as
   construtoras que você já conhece atuando na região para melhorar a
-  precisão em qualquer modo.
+  precisão em qualquer modo — já vem com algumas construtoras regionais
+  (Marcondes Cesar, TECVALE, M Vituzzo, Ergplan, Lemis, Araújo Simão,
+  Construtora Taubaté, Assaf) e nacionais (MRV, Cyrela, Even etc.), mas está
+  longe de ser uma lista completa.
+- O filtro de cidade (`textMentionsCity`) reduz bastante, mas não elimina
+  por completo, resultados de cidades homônimas em outros estados — sempre
+  vale conferir a fonte do anúncio antes de agir sobre ele.
 - O e-mail encontrado é uma **melhor tentativa**, nunca garantida.
 - Os portais (Viva Real/ZAP) hoje bloqueiam as requisições vindas do GitHub
   Actions (HTTP 403) — por isso viraram uma fonte bônus, não a principal.
@@ -143,7 +172,7 @@ estático, ex.: `npx serve web` ou `python3 -m http.server --directory web`.
 
 ```
 src/
-  config.js               cidades, templates de busca, palavras-chave
+  config.js               cidades, templates de busca, domínios preferidos, palavras-chave
   sources/
     webSearch.js            escolhe Tavily ou Google conforme o que estiver configurado
     tavilySearch.js         wrapper da Tavily Search API (recomendado)

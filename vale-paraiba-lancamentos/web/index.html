@@ -7,106 +7,181 @@
 <style>
   :root {
     color-scheme: light dark;
-    --bg: #f6f5f2;
+    --bg: #f4f5f9;
+    --bg-soft: #eceef5;
     --card: #ffffff;
-    --text: #1c1a17;
-    --muted: #6b6560;
-    --border: #e4e0d8;
-    --accent: #8a5a34;
-    --accent-bg: #f1e4d6;
-    --new-bg: #e9f3e6;
-    --new-text: #2f6b30;
+    --text: #16181f;
+    --muted: #666c7c;
+    --border: #e2e4ec;
+    --accent: #5b47e0;
+    --accent-2: #2fb787;
+    --accent-bg: #ece9fc;
+    --new-bg: #e4f7ee;
+    --new-text: #1f8a5c;
+    --shadow: 0 1px 2px rgba(20, 20, 40, 0.04), 0 8px 24px -12px rgba(20, 20, 40, 0.12);
   }
   @media (prefers-color-scheme: dark) {
     :root {
-      --bg: #17140f;
-      --card: #221e18;
-      --text: #f1ede6;
-      --muted: #a89e8f;
-      --border: #3a342a;
-      --accent: #d9a869;
-      --accent-bg: #3a2d1c;
-      --new-bg: #1e3320;
-      --new-text: #7fd18a;
+      --bg: #0f1015;
+      --bg-soft: #16171f;
+      --card: #1a1c25;
+      --text: #f1f2f6;
+      --muted: #9298ab;
+      --border: #2b2d3a;
+      --accent: #8f7dfb;
+      --accent-2: #4fd6a6;
+      --accent-bg: #262143;
+      --new-bg: #17301f;
+      --new-text: #6bdb9c;
+      --shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 8px 24px -12px rgba(0, 0, 0, 0.5);
     }
   }
   * { box-sizing: border-box; }
   body {
     margin: 0;
-    background: var(--bg);
+    background:
+      radial-gradient(1200px 480px at 50% -120px, var(--accent-bg), transparent 65%),
+      var(--bg);
     color: var(--text);
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    -webkit-font-smoothing: antialiased;
   }
+  a { color: var(--accent); }
   header {
-    padding: 28px 20px 16px;
-    max-width: 1100px;
+    padding: 40px 20px 8px;
+    max-width: 1120px;
     margin: 0 auto;
   }
-  h1 { font-size: 1.5rem; margin: 0 0 4px; }
-  .subtitle { color: var(--muted); font-size: 0.9rem; }
-  .controls {
-    max-width: 1100px;
+  h1 {
+    font-size: clamp(1.4rem, 2.4vw, 1.85rem);
+    margin: 0 0 6px;
+    letter-spacing: -0.02em;
+  }
+  .subtitle { color: var(--muted); font-size: 0.92rem; }
+
+  nav.tabs {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    backdrop-filter: blur(10px);
+    background: color-mix(in srgb, var(--bg) 82%, transparent);
+    border-bottom: 1px solid var(--border);
+    margin-top: 24px;
+  }
+  .tabs-inner {
+    max-width: 1120px;
     margin: 0 auto;
-    padding: 0 20px 16px;
+    padding: 0 20px;
+    display: flex;
+    gap: 4px;
+  }
+  .tab-btn {
+    appearance: none;
+    border: none;
+    background: transparent;
+    color: var(--muted);
+    font-size: 0.92rem;
+    font-weight: 600;
+    padding: 14px 6px;
+    margin-right: 22px;
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    transition: color 0.15s ease, border-color 0.15s ease;
+  }
+  .tab-btn:hover { color: var(--text); }
+  .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  .controls {
+    max-width: 1120px;
+    margin: 0 auto;
+    padding: 20px 20px 16px;
     display: flex;
     gap: 10px;
     flex-wrap: wrap;
   }
   input, select {
-    padding: 9px 12px;
-    border-radius: 8px;
+    padding: 10px 14px;
+    border-radius: 10px;
     border: 1px solid var(--border);
     background: var(--card);
     color: var(--text);
     font-size: 0.9rem;
+    box-shadow: var(--shadow);
   }
   input[type="search"] { flex: 1; min-width: 220px; }
-  main { max-width: 1100px; margin: 0 auto; padding: 0 20px 60px; }
+  main { max-width: 1120px; margin: 0 auto; padding: 0 20px 70px; }
   .grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-    gap: 14px;
+    gap: 16px;
   }
   .card {
     background: var(--card);
     border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 16px;
+    border-radius: 16px;
+    padding: 18px 18px 16px;
+    box-shadow: var(--shadow);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  .card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 2px 4px rgba(20, 20, 40, 0.06), 0 16px 32px -14px rgba(20, 20, 40, 0.22);
   }
   .card h2 {
-    font-size: 1.02rem;
-    margin: 0 0 8px;
+    font-size: 1.03rem;
+    margin: 0 0 10px;
     display: flex;
     align-items: baseline;
     gap: 8px;
     flex-wrap: wrap;
   }
   .badge {
-    font-size: 0.68rem;
+    font-size: 0.66rem;
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.03em;
-    padding: 2px 8px;
+    letter-spacing: 0.04em;
+    padding: 3px 9px;
     border-radius: 999px;
     background: var(--new-bg);
     color: var(--new-text);
   }
-  .row { font-size: 0.86rem; color: var(--muted); margin: 3px 0; }
+  .rank-badge {
+    font-size: 0.72rem;
+    font-weight: 800;
+    padding: 3px 10px;
+    border-radius: 999px;
+    background: var(--accent);
+    color: #fff;
+    flex-shrink: 0;
+  }
+  .row { font-size: 0.87rem; color: var(--muted); margin: 4px 0; line-height: 1.45; }
   .row b { color: var(--text); font-weight: 600; }
-  .row a { color: var(--accent); }
+  .row a { text-decoration: none; }
+  .row a:hover { text-decoration: underline; }
   .source-tag {
     display: inline-block;
     font-size: 0.72rem;
     color: var(--accent);
     background: var(--accent-bg);
-    padding: 1px 7px;
-    border-radius: 6px;
-    margin-top: 8px;
+    padding: 3px 9px;
+    border-radius: 8px;
+    margin-top: 10px;
+    text-decoration: none;
+  }
+  .source-tag:hover { text-decoration: underline; }
+  .card-links {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+    margin-top: 10px;
   }
   .empty {
     text-align: center;
     color: var(--muted);
-    padding: 60px 20px;
+    padding: 70px 20px;
     line-height: 1.6;
   }
   .empty code {
@@ -114,8 +189,17 @@
     padding: 1px 6px;
     border-radius: 4px;
   }
+  .method-note {
+    max-width: 1120px;
+    margin: 0 auto;
+    padding: 20px 20px 4px;
+    color: var(--muted);
+    font-size: 0.84rem;
+    line-height: 1.55;
+  }
+  .method-note b { color: var(--text); }
   footer {
-    max-width: 1100px;
+    max-width: 1120px;
     margin: 0 auto;
     padding: 0 20px 40px;
     color: var(--muted);
@@ -129,29 +213,67 @@
     <div class="subtitle" id="subtitle">Carregando...</div>
   </header>
 
-  <div class="controls">
-    <input type="search" id="search" placeholder="Buscar por empreendimento ou construtora..." />
-    <select id="cityFilter"><option value="">Todas as cidades</option></select>
-    <select id="sortBy">
-      <option value="new">Mais recentes primeiro</option>
-      <option value="name">Nome (A-Z)</option>
-      <option value="city">Cidade (A-Z)</option>
-    </select>
-  </div>
+  <nav class="tabs">
+    <div class="tabs-inner">
+      <button class="tab-btn active" data-tab="lancamentos" type="button">Lançamentos</button>
+      <button class="tab-btn" data-tab="construtoras" type="button">🏢 Maiores Construtoras (SP)</button>
+    </div>
+  </nav>
 
-  <main>
-    <div class="grid" id="grid"></div>
-    <div class="empty" id="empty" hidden></div>
-  </main>
+  <section class="panel active" id="panel-lancamentos">
+    <div class="controls">
+      <input type="search" id="search" placeholder="Buscar por empreendimento ou construtora..." />
+      <select id="cityFilter"><option value="">Todas as cidades</option></select>
+      <select id="sortBy">
+        <option value="new">Mais recentes primeiro</option>
+        <option value="name">Nome (A-Z)</option>
+        <option value="city">Cidade (A-Z)</option>
+      </select>
+    </div>
+
+    <main>
+      <div class="grid" id="grid"></div>
+      <div class="empty" id="empty" hidden></div>
+    </main>
+  </section>
+
+  <section class="panel" id="panel-construtoras">
+    <div class="method-note" id="methodNote"></div>
+    <main>
+      <div class="grid" id="grid-construtoras"></div>
+    </main>
+  </section>
 
   <footer>
-    Gerado automaticamente por um monitor diário (portais públicos + Google Custom Search).
+    Gerado automaticamente por um monitor periódico (portais públicos + busca web).
     Este painel não substitui a checagem direta com a construtora/incorporadora antes de
     qualquer decisão comercial. Código-fonte em
     <code>vale-paraiba-lancamentos/</code> no repositório.
   </footer>
 
 <script>
+(function () {
+  const tabButtons = document.querySelectorAll('.tab-btn');
+  const panels = {
+    lancamentos: document.getElementById('panel-lancamentos'),
+    construtoras: document.getElementById('panel-construtoras'),
+  };
+  tabButtons.forEach((btn) => {
+    btn.addEventListener('click', () => {
+      tabButtons.forEach((b) => b.classList.remove('active'));
+      btn.classList.add('active');
+      Object.values(panels).forEach((p) => p.classList.remove('active'));
+      panels[btn.dataset.tab].classList.add('active');
+    });
+  });
+})();
+
+function escapeHtml(str) {
+  return String(str ?? '').replace(/[&<>"']/g, (c) => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+  }[c]));
+}
+
 (async function () {
   const els = {
     subtitle: document.getElementById('subtitle'),
@@ -161,12 +283,6 @@
     cityFilter: document.getElementById('cityFilter'),
     sortBy: document.getElementById('sortBy'),
   };
-
-  function escapeHtml(str) {
-    return String(str ?? '').replace(/[&<>"']/g, (c) => ({
-      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
-    }[c]));
-  }
 
   function formatDate(iso) {
     if (!iso) return null;
@@ -245,8 +361,8 @@
         ? 'Nenhum resultado para esse filtro.'
         : 'Nenhum lançamento encontrado ainda. Isso é esperado até a primeira execução automática ' +
           'do monitor (ver <code>.github/workflows/vale-paraiba-lancamentos.yml</code>), ou pode ' +
-          'significar que só o modo zero-config (portais públicos) está ativo — configure a Google ' +
-          'Custom Search API para ampliar a cobertura (ver README).';
+          'significar que só o modo zero-config (portais públicos) está ativo — configure a busca web ' +
+          '(Tavily ou Google) para ampliar a cobertura (ver README).';
       return;
     }
 
@@ -259,6 +375,44 @@
   els.cityFilter.addEventListener('change', render);
   els.sortBy.addEventListener('change', render);
   render();
+})();
+
+(async function () {
+  const grid = document.getElementById('grid-construtoras');
+  const note = document.getElementById('methodNote');
+
+  let data = { metodologia: '', atualizadoEm: null, construtoras: [] };
+  try {
+    const res = await fetch('./top-construtoras-sp.json', { cache: 'no-store' });
+    if (res.ok) data = await res.json();
+  } catch (err) {
+    console.warn('Falha ao carregar top-construtoras-sp.json', err);
+  }
+
+  note.innerHTML = data.metodologia
+    ? `<b>Como essa lista foi montada:</b> ${escapeHtml(data.metodologia)}` +
+      (data.atualizadoEm ? ` <br/>Curadoria atualizada em ${escapeHtml(data.atualizadoEm)}.` : '')
+    : '';
+
+  function contatoHtml(c) {
+    if (!c) return '<div class="row">Contato: ver site oficial</div>';
+    if (c.tipo === 'email') {
+      return `<div class="row"><b>Contato:</b> <a href="mailto:${escapeHtml(c.email)}">${escapeHtml(c.email)}</a> <span style="color:var(--muted)">(${escapeHtml(c.label || '')})</span></div>`;
+    }
+    return `<div class="row"><b>Contato:</b> <a href="${escapeHtml(c.url)}" target="_blank" rel="noopener">${escapeHtml(c.label || 'Fale conosco')}</a></div>`;
+  }
+
+  const list = Array.isArray(data.construtoras) ? data.construtoras : [];
+  grid.innerHTML = list.map((b) => `
+    <div class="card">
+      <h2><span class="rank-badge">#${escapeHtml(b.posicao)}</span> ${escapeHtml(b.nome)}</h2>
+      <div class="row">${escapeHtml(b.destaque || '')}</div>
+      ${contatoHtml(b.contato)}
+      <div class="card-links">
+        <a class="source-tag" href="${escapeHtml(b.site || '#')}" target="_blank" rel="noopener">site oficial</a>
+        ${b.fonte ? `<a class="source-tag" href="${escapeHtml(b.fonte)}" target="_blank" rel="noopener">fonte do ranking</a>` : ''}
+      </div>
+    </div>`).join('');
 })();
 </script>
 </body>

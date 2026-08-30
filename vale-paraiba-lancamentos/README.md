@@ -34,7 +34,14 @@ ver abaixo), o app roda sozinho todo dia:
   nada.
 - Publica um **painel web** (`web/index.html`) no GitHub Pages, com busca,
   filtro por cidade e destaque para os lançamentos novos — dá pra checar
-  quando quiser, sem esperar o e-mail.
+  quando quiser, sem esperar o e-mail. O painel tem duas abas: **Lançamentos**
+  (os dados coletados pelo monitor) e **🏢 Maiores Construtoras (SP)** — uma
+  lista curada, com base em rankings públicos do setor (Ranking INTEC, Top
+  Imobiliário, Econodata), das maiores construtoras/incorporadoras que atuam
+  no estado de São Paulo, com site oficial e canal de contato (e-mail ou
+  portal de fornecedores) de cada uma. Essa lista é estática — mantida em
+  `web/top-construtoras-sp.json` — e não é gerada automaticamente pelo
+  monitor.
 
 ### Passo único: habilitar o GitHub Pages
 
@@ -203,12 +210,14 @@ data/
 tests/                     testes unitários (node --test)
 ```
 
-## Automação diária (GitHub Actions)
+## Automação (GitHub Actions)
 
 O workflow
 [`../.github/workflows/vale-paraiba-lancamentos.yml`](../.github/workflows/vale-paraiba-lancamentos.yml)
-roda todo dia às 08:00 (horário de Brasília) e também pode ser disparado
-manualmente pela aba **Actions**. A cada execução ele:
+roda a cada 3 dias às 08:00 (horário de Brasília) — o volume de novos
+lançamentos não justifica rodar todo dia, e o intervalo maior também poupa
+cota de busca — e também pode ser disparado manualmente pela aba
+**Actions**. A cada execução ele:
 
 1. Roda o monitor (`npm start`).
 2. Commita `data/seen.json` de volta no repositório (histórico do que já foi

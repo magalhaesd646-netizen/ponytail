@@ -58,12 +58,18 @@ const REAL_ESTATE_KEYWORDS = [
 
 // Passa no filtro acima mas claramente não é um lançamento à venda —
 // aluguel/locação e vagas de emprego no setor imobiliário, por exemplo.
+// "gerente de" pega títulos de vaga tipo "Gerente de Incorporação e Novos
+// Negócios" (visto se repetindo em sites de emprego para várias cidades).
 const NON_LAUNCH_EXCLUDE_KEYWORDS = [
   'aluguel',
   'para alugar',
   'locacao',
   'vaga de emprego',
   'curriculo',
+  'gerente de',
+  'analista de',
+  'coordenador de',
+  'oportunidade de emprego',
 ];
 
 function textMentionsRealEstateLaunch(text) {

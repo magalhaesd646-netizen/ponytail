@@ -1,1 +1,21 @@
-[]
+[
+  {
+    "id": "camp_1788306693319",
+    "listId": "construtoras",
+    "tipo": "manual",
+    "scheduleId": null,
+    "assunto": "Teste de disparo - Dovale Comercial",
+    "criadoEm": "2026-09-01T23:51:33.319Z",
+    "totalAlvo": 1,
+    "enviados": 0,
+    "falhas": 1,
+    "resultados": [
+      {
+        "contatoId": "7f132ae6-6963-4e8c-a3b5-37406751ab0d",
+        "email": "dsm150@hotmail.com",
+        "status": "erro",
+        "erro": "Invalid login: 535-5.7.8 Username and Password not accepted. For more information, go to\n535 5.7.8  https://support.google.com/mail/?p=BadCredentials 5a478bee46e88-32f07bde5bfsm1310617eec.27 - gsmtp"
+      }
+    ]
+  }
+]

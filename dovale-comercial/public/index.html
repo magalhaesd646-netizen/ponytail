@@ -1,0 +1,129 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Dovale Comercial</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <h1>Dovale Comercial</h1>
+    <p class="subtitle">Prospecção por e-mail — construtoras, advocacia imobiliária e síndicos/administradoras</p>
+  </header>
+
+  <nav id="tabs"></nav>
+
+  <main id="list-panel" class="panel">
+    <section class="card">
+      <h2>Importar lista em PDF</h2>
+      <form id="upload-form">
+        <input type="file" id="upload-input" accept="application/pdf" multiple />
+        <button type="submit">Extrair contatos do PDF</button>
+      </form>
+      <p class="hint">
+        A extração é automática (heurística por regex) e pode errar nome/empresa em PDFs com layout
+        irregular — revise e corrija antes de confirmar a importação.
+      </p>
+      <div id="review-area"></div>
+    </section>
+
+    <section class="card">
+      <h2>Contatos <span id="contacts-count" class="badge"></span></h2>
+      <div class="table-wrap">
+        <table id="contacts-table">
+          <thead>
+            <tr>
+              <th><input type="checkbox" id="select-all" /></th>
+              <th>Nome</th><th>Empresa</th><th>E-mail</th><th>Telefone</th>
+              <th>Cidade</th><th>Status</th><th>Origem</th><th></th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2>Disparo manual (coletivo)</h2>
+      <form id="send-form">
+        <label>Assunto <input type="text" id="send-subject" required /></label>
+        <label>
+          Corpo do e-mail (HTML simples; use <code>{{nome}}</code>, <code>{{empresa}}</code>,
+          <code>{{cidade}}</code>)
+          <textarea id="send-body" rows="8" required></textarea>
+        </label>
+        <p class="hint">
+          Envia para os contatos <strong>selecionados</strong> na tabela acima (ou para todos os
+          ativos, se nenhum for marcado). Envio um a um com pausa entre mensagens para reduzir risco
+          de bloqueio pelo Gmail.
+        </p>
+        <button type="submit">Enviar agora</button>
+      </form>
+      <div id="send-result"></div>
+    </section>
+  </main>
+
+  <main id="schedules-panel" class="panel" hidden>
+    <section class="card">
+      <h2>Novo disparo agendado (recorrente)</h2>
+      <form id="schedule-form">
+        <label>Nome do agendamento <input type="text" id="sched-nome" required /></label>
+        <label>Lista
+          <select id="sched-lista" required></select>
+        </label>
+        <label>Recorrência
+          <select id="sched-preset">
+            <option value="0 9 * * 1">Toda segunda-feira às 09:00</option>
+            <option value="0 9 1 * *">Todo dia 1º do mês às 09:00</option>
+            <option value="0 9 * * *">Todo dia às 09:00</option>
+            <option value="custom">Personalizado (cron)</option>
+          </select>
+        </label>
+        <label id="sched-cron-wrap" hidden>
+          Expressão cron (min hora dia mês dia-semana, UTC)
+          <input type="text" id="sched-cron" placeholder="0 9 * * 1" />
+        </label>
+        <label>Assunto <input type="text" id="sched-subject" required /></label>
+        <label>Corpo do e-mail (HTML)
+          <textarea id="sched-body" rows="6" required></textarea>
+        </label>
+        <button type="submit">Criar agendamento</button>
+      </form>
+    </section>
+
+    <section class="card">
+      <h2>Agendamentos ativos</h2>
+      <div class="table-wrap">
+        <table id="schedules-table">
+          <thead>
+            <tr><th>Nome</th><th>Lista</th><th>Assunto</th><th>Cron</th><th>Última execução</th><th>Ativo</th><th></th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+      <p class="hint">
+        Os agendamentos disparam sozinhos enquanto o servidor local estiver ligado (checagem a cada
+        5 min) e também via GitHub Actions a cada hora, então funcionam mesmo sem deixar o app
+        aberto — veja o README.
+      </p>
+    </section>
+  </main>
+
+  <main id="history-panel" class="panel" hidden>
+    <section class="card">
+      <h2>Histórico de disparos</h2>
+      <div class="table-wrap">
+        <table id="history-table">
+          <thead>
+            <tr><th>Data</th><th>Lista</th><th>Tipo</th><th>Assunto</th><th>Enviados</th><th>Falhas</th><th>Alvo</th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>

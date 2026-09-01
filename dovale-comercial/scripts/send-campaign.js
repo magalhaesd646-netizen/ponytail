@@ -55,12 +55,16 @@ async function main() {
     `Disparo concluído: lista=${lista} enviados=${campaign.enviados} falhas=${campaign.falhas} de ${campaign.totalAlvo} alvo(s).`
   );
   if (campaign.falhas) {
-    console.log(
+    console.error(
       campaign.resultados
         .filter((r) => r.status === 'erro')
         .map((r) => `  - ${r.email}: ${r.erro}`)
         .join('\n')
     );
+    // Sem isso o passo do GitHub Actions aparece verde mesmo com o envio
+    // 100% falho (ex: credencial do Gmail rejeitada) — falha real precisa
+    // aparecer como falha no workflow.
+    process.exitCode = 1;
   }
 }
 

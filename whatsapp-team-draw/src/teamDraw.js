@@ -1,5 +1,6 @@
 const MIN_TEAMS = 2;
 const MAX_TEAMS = 4;
+const MIN_TEAM_SIZE = 5;
 
 function shuffle(list) {
   const result = [...list];
@@ -46,7 +47,8 @@ function distribute(pool, teams, capacities, startIndex) {
  * Seeded players ("cabeças de chave") are spread one per team before the
  * rest of the pool is shuffled in, so the strongest players don't stack.
  * Every player lands on a team (no reserves): when the list doesn't divide
- * evenly, the smaller team(s) are always the last one(s).
+ * evenly, the smaller team(s) are always the last one(s). Throws if the
+ * outfield pool can't fill every team with at least MIN_TEAM_SIZE players.
  *
  * @param {{name: string, isGoalkeeper?: boolean, isSeed?: boolean}[]} players
  * @param {{numberOfTeams: number}} options
@@ -68,7 +70,16 @@ function drawTeams(players, options = {}) {
   const rest = shuffle(outfield.filter((p) => !p.isSeed));
 
   const pool = [...extraGoalkeepers, ...rest];
-  const capacities = computeCapacities(seeds.length + pool.length, numberOfTeams);
+  const totalToDistribute = seeds.length + pool.length;
+
+  const minRequired = numberOfTeams * MIN_TEAM_SIZE;
+  if (totalToDistribute < minRequired) {
+    throw new Error(
+      `Jogadores de linha insuficientes: são ${totalToDistribute} para ${numberOfTeams} times de pelo menos ${MIN_TEAM_SIZE} cada (precisa de ${minRequired}). Reduza a quantidade de times ou entre com mais gente.`,
+    );
+  }
+
+  const capacities = computeCapacities(totalToDistribute, numberOfTeams);
 
   const teams = Array.from({ length: numberOfTeams }, () => []);
   const seedResult = distribute(seeds, teams, capacities, 0);
@@ -94,4 +105,4 @@ function parseDrawArgs(args) {
   return { numberOfTeams };
 }
 
-module.exports = { drawTeams, parseDrawArgs, MIN_TEAMS, MAX_TEAMS };
+module.exports = { drawTeams, parseDrawArgs, MIN_TEAMS, MAX_TEAMS, MIN_TEAM_SIZE };

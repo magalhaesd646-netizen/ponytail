@@ -1,6 +1,6 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
-const { drawTeams, parseDrawArgs } = require("../src/teamDraw");
+const { drawTeams, parseDrawArgs, MIN_TEAM_SIZE } = require("../src/teamDraw");
 
 function makePlayers(count, { goalkeepers = 0, seeds = 0 } = {}) {
   return Array.from({ length: count }, (_, i) => ({
@@ -29,7 +29,7 @@ test("assigns exactly one goalkeeper per team and excludes them from the draw po
 });
 
 test("spreads seeded players one per team before filling the rest", () => {
-  const players = makePlayers(10, { goalkeepers: 2, seeds: 2 });
+  const players = makePlayers(14, { goalkeepers: 2, seeds: 2 });
   const { teams } = drawTeams(players, { numberOfTeams: 2 });
   for (const team of teams) {
     assert.equal(team.players.filter((p) => p.isSeed).length, 1);
@@ -37,19 +37,20 @@ test("spreads seeded players one per team before filling the rest", () => {
 });
 
 test("never lands anyone in reserves — every player joins a team", () => {
-  const players = makePlayers(13, { goalkeepers: 2 });
+  const players = makePlayers(18, { goalkeepers: 2 });
   const { teams, reserves } = drawTeams(players, { numberOfTeams: 3 });
   const totalOnTeams = teams.reduce((sum, t) => sum + t.players.length, 0);
-  assert.equal(totalOnTeams, 11);
+  assert.equal(totalOnTeams, 16);
   assert.equal(reserves.length, 0);
 });
 
-test("puts the smaller team(s) always last, never in the middle", () => {
-  // 10 outfield players across 3 teams: 4, 3, 3.
-  const players = makePlayers(10);
+test("puts the smaller team(s) always last, never in the middle, and never below the minimum", () => {
+  // 16 outfield players across 3 teams: 6, 5, 5.
+  const players = makePlayers(16);
   const { teams } = drawTeams(players, { numberOfTeams: 3 });
   const sizes = teams.map((t) => t.players.length);
-  assert.deepEqual(sizes, [4, 3, 3]);
+  assert.deepEqual(sizes, [6, 5, 5]);
+  for (const size of sizes) assert.ok(size >= MIN_TEAM_SIZE);
 });
 
 test("never loses or duplicates a player", () => {
@@ -64,14 +65,21 @@ test("never loses or duplicates a player", () => {
 });
 
 test("rejects an invalid number of teams", () => {
-  assert.throws(() => drawTeams(makePlayers(5), { numberOfTeams: 0 }));
+  assert.throws(() => drawTeams(makePlayers(20), { numberOfTeams: 0 }));
+});
+
+test("rejects a draw that would leave a team under the minimum size", () => {
+  // 16 outfield players don't cover 4 teams of at least 5 (needs 20).
+  const players = makePlayers(16);
+  assert.throws(() => drawTeams(players, { numberOfTeams: 4 }), /Jogadores de linha insuficientes/);
 });
 
 test("draws the exact number of teams requested (2 to 4)", () => {
-  const players = makePlayers(20, { goalkeepers: 4 });
+  const players = makePlayers(24, { goalkeepers: 4 });
   for (const numberOfTeams of [2, 3, 4]) {
     const { teams } = drawTeams(players, { numberOfTeams });
     assert.equal(teams.length, numberOfTeams);
+    for (const team of teams) assert.ok(team.players.length >= MIN_TEAM_SIZE);
   }
 });
 

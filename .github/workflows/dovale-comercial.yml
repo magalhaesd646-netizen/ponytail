@@ -52,8 +52,10 @@ jobs:
 
       - name: Rodar agendamentos recorrentes devidos
         env:
-          GMAIL_USER: ${{ secrets.DOVALE_GMAIL_USER }}
-          GMAIL_APP_PASSWORD: ${{ secrets.DOVALE_GMAIL_APP_PASSWORD }}
+          SMTP_HOST: ${{ vars.DOVALE_SMTP_HOST }}
+          SMTP_PORT: ${{ vars.DOVALE_SMTP_PORT }}
+          SMTP_USER: ${{ secrets.DOVALE_SMTP_USER }}
+          SMTP_PASS: ${{ secrets.DOVALE_SMTP_PASS }}
           FROM_NAME: ${{ vars.DOVALE_FROM_NAME }}
           EMAIL_SIGNATURE: ${{ vars.DOVALE_EMAIL_SIGNATURE }}
           SEND_DELAY_MS: ${{ vars.DOVALE_SEND_DELAY_MS }}
@@ -63,8 +65,10 @@ jobs:
       - name: Disparo manual (só quando acionado via workflow_dispatch)
         if: inputs.acao == 'enviar-campanha-manual'
         env:
-          GMAIL_USER: ${{ secrets.DOVALE_GMAIL_USER }}
-          GMAIL_APP_PASSWORD: ${{ secrets.DOVALE_GMAIL_APP_PASSWORD }}
+          SMTP_HOST: ${{ vars.DOVALE_SMTP_HOST }}
+          SMTP_PORT: ${{ vars.DOVALE_SMTP_PORT }}
+          SMTP_USER: ${{ secrets.DOVALE_SMTP_USER }}
+          SMTP_PASS: ${{ secrets.DOVALE_SMTP_PASS }}
           FROM_NAME: ${{ vars.DOVALE_FROM_NAME }}
           EMAIL_SIGNATURE: ${{ vars.DOVALE_EMAIL_SIGNATURE }}
           SEND_DELAY_MS: ${{ vars.DOVALE_SEND_DELAY_MS }}
@@ -75,6 +79,7 @@ jobs:
         run: npm run send-campaign
 
       - name: Salvar bases e histórico atualizados
+        if: always()
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"

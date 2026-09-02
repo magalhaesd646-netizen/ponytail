@@ -52,12 +52,12 @@ test("only the last team is smaller than 5 when the list is short", () => {
   assert.deepEqual(sizes, [5, 5, 5, 1]);
 });
 
-test("only the last team grows past 5 when there's a small surplus", () => {
-  // 22 outfield players across 4 teams: 5, 5, 5, 7.
+test("spreads a surplus across the other teams, keeping the last one at 5", () => {
+  // 22 outfield players across 4 teams: surplus of 2 goes to the front teams.
   const players = makePlayers(22);
   const { teams } = drawTeams(players, { numberOfTeams: 4 });
   const sizes = teams.map((t) => t.players.length);
-  assert.deepEqual(sizes, [5, 5, 5, 7]);
+  assert.deepEqual(sizes, [6, 6, 5, 5]);
 });
 
 test("never loses or duplicates a player", () => {

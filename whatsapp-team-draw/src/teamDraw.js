@@ -11,19 +11,34 @@ function shuffle(list) {
   return result;
 }
 
-// Fills each team up to TEAM_SIZE in order; whatever doesn't fit a full team
-// lands on the last one. So every team has exactly TEAM_SIZE players except
-// the last, which absorbs the leftover — fewer players when the list is
-// short, more when it doesn't divide into a whole extra team.
+// Every team starts at TEAM_SIZE. Only the last team is allowed to end up
+// with 5 or fewer: a shortfall is taken entirely from the last team backward
+// (so an earlier team is never below TEAM_SIZE), while a surplus is spread
+// across every team EXCEPT the last (so the last never goes above TEAM_SIZE).
 function computeCapacities(total, numberOfTeams) {
-  const capacities = [];
-  let remaining = total;
-  for (let i = 0; i < numberOfTeams; i++) {
-    const cap = Math.min(TEAM_SIZE, remaining);
-    capacities.push(cap);
-    remaining -= cap;
+  const capacities = Array(numberOfTeams).fill(TEAM_SIZE);
+  const diff = total - TEAM_SIZE * numberOfTeams;
+
+  if (diff > 0) {
+    const frontTeams = numberOfTeams - 1;
+    if (frontTeams === 0) {
+      capacities[0] += diff;
+    } else {
+      const perTeam = Math.floor(diff / frontTeams);
+      const extra = diff % frontTeams;
+      for (let i = 0; i < frontTeams; i++) {
+        capacities[i] += perTeam + (i < extra ? 1 : 0);
+      }
+    }
+  } else if (diff < 0) {
+    let toRemove = -diff;
+    for (let i = numberOfTeams - 1; i >= 0 && toRemove > 0; i--) {
+      const removed = Math.min(capacities[i], toRemove);
+      capacities[i] -= removed;
+      toRemove -= removed;
+    }
   }
-  capacities[numberOfTeams - 1] += remaining;
+
   return capacities;
 }
 
@@ -55,8 +70,9 @@ function distribute(pool, teams, capacities, startIndex) {
  * Seeded players ("cabeças de chave") are spread one per team before the
  * rest of the pool is shuffled in, so the strongest players don't stack.
  * Every player lands on a team (no reserves). Every team has exactly
- * TEAM_SIZE (5) players except the last one, which absorbs whatever's left
- * over — it may end up with fewer players than the others.
+ * TEAM_SIZE (5) players except the last one: if the list is short, only the
+ * last team shrinks (5 or fewer); if there's a surplus, it's spread across
+ * every OTHER team instead, so the last team never goes above TEAM_SIZE.
  *
  * @param {{name: string, isGoalkeeper?: boolean, isSeed?: boolean}[]} players
  * @param {{numberOfTeams: number}} options

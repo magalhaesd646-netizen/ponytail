@@ -35,11 +35,12 @@ qualquer conversa (grupo ou individual) onde estiver presente.
 
 1. Você escolhe quantos times quer (2, 3 ou 4). Todo mundo da lista entra em
    algum time — não há lista de reservas.
-2. Cada time cheio tem exatamente 5 jogadores de linha. Só o último time é
-   diferente: ele fica com o que sobrar — pode ter menos de 5 se a lista for
-   curta para a quantidade de times escolhida (ex.: 16 jogadores em 4 times
-   → 5, 5, 5, 1), ou um pouco mais se sobrar gente demais pra caber num time
-   novo (ex.: 22 jogadores em 4 times → 5, 5, 5, 7).
+2. Cada time cheio tem exatamente 5 jogadores de linha. Só o último time
+   pode ter 5 ou menos: se a lista for curta para a quantidade de times
+   escolhida, é ele que fica menor (ex.: 16 jogadores em 4 times → 5, 5, 5,
+   1). Se sobrar gente além do que cabe nos times de 5, quem absorve o
+   excedente são os outros times, não o último (ex.: 22 jogadores em 4
+   times → 6, 6, 5, 5).
 3. Cada goleiro marcado com `!goleiro` é distribuído um por time (sorteado
    entre os times, não entra na disputa por vaga de linha).
 4. Os cabeças de chave são embaralhados e espalhados um por time antes do

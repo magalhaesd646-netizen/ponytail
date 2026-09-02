@@ -10,7 +10,7 @@ function makePlayers(count, { goalkeepers = 0, seeds = 0 } = {}) {
   }));
 }
 
-test("splits players evenly when the list divides exactly", () => {
+test("fills every team with exactly 5 players when the list divides exactly", () => {
   const players = makePlayers(12, { goalkeepers: 2 });
   const { teams, reserves } = drawTeams(players, { numberOfTeams: 2 });
   assert.equal(teams.length, 2);
@@ -44,20 +44,20 @@ test("never lands anyone in reserves — every player joins a team", () => {
   assert.equal(reserves.length, 0);
 });
 
-test("puts the smaller team(s) always last, never in the middle", () => {
-  // 10 outfield players across 3 teams: 4, 3, 3.
-  const players = makePlayers(10);
-  const { teams } = drawTeams(players, { numberOfTeams: 3 });
-  const sizes = teams.map((t) => t.players.length);
-  assert.deepEqual(sizes, [4, 3, 3]);
-});
-
-test("lets the last team(s) end up with fewer players than five when the list is small", () => {
-  // 10 outfield players across 4 teams: 3, 3, 2, 2 — no minimum enforced.
-  const players = makePlayers(10);
+test("only the last team is smaller than 5 when the list is short", () => {
+  // 16 outfield players across 4 teams: 5, 5, 5, 1.
+  const players = makePlayers(16);
   const { teams } = drawTeams(players, { numberOfTeams: 4 });
   const sizes = teams.map((t) => t.players.length);
-  assert.deepEqual(sizes, [3, 3, 2, 2]);
+  assert.deepEqual(sizes, [5, 5, 5, 1]);
+});
+
+test("only the last team grows past 5 when there's a small surplus", () => {
+  // 22 outfield players across 4 teams: 5, 5, 5, 7.
+  const players = makePlayers(22);
+  const { teams } = drawTeams(players, { numberOfTeams: 4 });
+  const sizes = teams.map((t) => t.players.length);
+  assert.deepEqual(sizes, [5, 5, 5, 7]);
 });
 
 test("never loses or duplicates a player", () => {

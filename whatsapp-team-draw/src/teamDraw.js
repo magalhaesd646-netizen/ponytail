@@ -1,5 +1,6 @@
 const MIN_TEAMS = 2;
 const MAX_TEAMS = 4;
+const TEAM_SIZE = 5;
 
 function shuffle(list) {
   const result = [...list];
@@ -10,12 +11,20 @@ function shuffle(list) {
   return result;
 }
 
-// Splits `total` players across `numberOfTeams` as evenly as possible, with
-// any team that ends up smaller always coming last (never in the middle).
+// Fills each team up to TEAM_SIZE in order; whatever doesn't fit a full team
+// lands on the last one. So every team has exactly TEAM_SIZE players except
+// the last, which absorbs the leftover — fewer players when the list is
+// short, more when it doesn't divide into a whole extra team.
 function computeCapacities(total, numberOfTeams) {
-  const base = Math.floor(total / numberOfTeams);
-  const remainder = total % numberOfTeams;
-  return Array.from({ length: numberOfTeams }, (_, i) => (i < remainder ? base + 1 : base));
+  const capacities = [];
+  let remaining = total;
+  for (let i = 0; i < numberOfTeams; i++) {
+    const cap = Math.min(TEAM_SIZE, remaining);
+    capacities.push(cap);
+    remaining -= cap;
+  }
+  capacities[numberOfTeams - 1] += remaining;
+  return capacities;
 }
 
 // Round-robins `pool` into `teams`, skipping any team already at its capacity.
@@ -45,9 +54,9 @@ function distribute(pool, teams, capacities, startIndex) {
  * Goalkeepers are assigned one per team and never enter the outfield draw.
  * Seeded players ("cabeças de chave") are spread one per team before the
  * rest of the pool is shuffled in, so the strongest players don't stack.
- * Every player lands on a team (no reserves): when the list doesn't divide
- * evenly, the smaller team(s) are always the last one(s) — the last team
- * may end up with fewer players than the others.
+ * Every player lands on a team (no reserves). Every team has exactly
+ * TEAM_SIZE (5) players except the last one, which absorbs whatever's left
+ * over — it may end up with fewer players than the others.
  *
  * @param {{name: string, isGoalkeeper?: boolean, isSeed?: boolean}[]} players
  * @param {{numberOfTeams: number}} options

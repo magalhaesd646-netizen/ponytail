@@ -65,6 +65,9 @@ jobs:
             git push
           fi
 
+      - name: Incluir app de investimentos no mesmo painel
+        run: cp -r ../investimentos web/investimentos
+
       - name: Publicar painel como artefato (para o job de deploy)
         uses: actions/upload-artifact@v4
         with:

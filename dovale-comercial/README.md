@@ -2,7 +2,7 @@
 
 App para administrar a parte comercial da Dovale Engenharia: bases de
 potenciais clientes por segmento e disparo de e-mail (manual ou recorrente)
-pela conta Gmail `danilo.magalhaes@dovaleengenharia.com`.
+pela conta `danilo.magalhaes@dovaleengenharia.com` (Titan Email).
 
 ## O que o app faz
 
@@ -24,11 +24,18 @@ pela conta Gmail `danilo.magalhaes@dovaleengenharia.com`.
 
 ## Configuração inicial
 
-1. **Senha de app do Gmail** (não é a senha normal da conta): ative a
-   verificação em duas etapas em `danilo.magalhaes@dovaleengenharia.com` e
-   crie uma senha de app em https://myaccount.google.com/apppasswords.
-2. Copie `.env.example` para `.env` e preencha `GMAIL_USER` e
-   `GMAIL_APP_PASSWORD` (os demais campos já têm valores padrão razoáveis).
+1. **Libere o acesso de terceiros no Titan**: entre no webmail do Titan como
+   `danilo.magalhaes@dovaleengenharia.com`, vá em Configurações e ative o
+   "Acesso de terceiros" (third-party app access) — sem isso o SMTP recusa
+   qualquer login. Se a conta do Titan tiver verificação em duas etapas
+   ativada, desative-a (o Titan bloqueia apps de terceiros com 2FA ligado).
+   Se o domínio for hospedado na Europa, o host de SMTP muda (algo como
+   `smtp0101.titan.email` em vez de `smtp.titan.email`) — confirme o host
+   exato nas configurações de "cliente de e-mail" do próprio Titan.
+2. Copie `.env.example` para `.env` e preencha `SMTP_USER` (o e-mail) e
+   `SMTP_PASS` (a senha normal da caixa — o Titan não usa "senha de app"
+   como o Google). Ajuste `SMTP_HOST`/`SMTP_PORT` se a conta for hospedada
+   na Europa.
 3. `npm install`
 4. `npm start` e abra http://localhost:3000
 
@@ -61,8 +68,10 @@ Configure em **Settings → Secrets and variables → Actions** do repositório:
 
 | Nome | Tipo | Obrigatório |
 | --- | --- | --- |
-| `DOVALE_GMAIL_USER` | secret | sim |
-| `DOVALE_GMAIL_APP_PASSWORD` | secret | sim |
+| `DOVALE_SMTP_USER` | secret | sim |
+| `DOVALE_SMTP_PASS` | secret | sim |
+| `DOVALE_SMTP_HOST` | variable | não (padrão `smtp.titan.email`) |
+| `DOVALE_SMTP_PORT` | variable | não (padrão `465`) |
 | `DOVALE_FROM_NAME` | variable | não |
 | `DOVALE_EMAIL_SIGNATURE` | variable | não |
 | `DOVALE_SEND_DELAY_MS` | variable | não |
@@ -70,10 +79,9 @@ Configure em **Settings → Secrets and variables → Actions** do repositório:
 
 ## Avisos importantes
 
-- **Limite do Gmail**: conta pessoal permite ~500 e-mails/dia, Google
-  Workspace ~2000/dia. `SEND_DAILY_LIMIT` no `.env` protege contra passar
-  disso sem querer; `SEND_DELAY_MS` espaça os envios para reduzir o risco de
-  o Gmail marcar a conta como suspeita.
+- **Limite de envio**: `SEND_DAILY_LIMIT` no `.env` protege contra passar do
+  limite diário do seu plano Titan sem querer; `SEND_DELAY_MS` espaça os
+  envios para reduzir o risco de o provedor marcar a conta como suspeita.
 - **Cold e-mail / LGPD**: todo e-mail sai com cabeçalho `List-Unsubscribe` e
   o rodapé leva a assinatura configurada. Quando alguém pedir para não
   receber mais, marque o contato como "descadastrado" na tabela (ele para

@@ -28,19 +28,21 @@ qualquer conversa (grupo ou individual) onde estiver presente.
 | `!goleiro` | Marca/desmarca você como goleiro fixo do seu time |
 | `!cabeca` | Marca/desmarca você como cabeça de chave |
 | `!lista` | Mostra a lista atual |
-| `!sortear [tamanho]` | Sorteia os times (padrão: 5 jogadores de linha por time) |
+| `!sortear [quantidade de times]` | Sorteia os times (2 a 4, padrão: 2) |
 | `!limpar` | Zera a lista |
 
 ## Como funciona o sorteio
 
-1. Cada goleiro marcado com `!goleiro` é distribuído um por time (sorteado
+1. Você escolhe quantos times quer (2, 3 ou 4). Todo mundo da lista entra em
+   algum time — não há lista de reservas.
+2. Cada goleiro marcado com `!goleiro` é distribuído um por time (sorteado
    entre os times, não entra na disputa por vaga de linha).
-2. Os cabeças de chave são embaralhados e espalhados um por time antes do
+3. Os cabeças de chave são embaralhados e espalhados um por time antes do
    resto da lista, pra evitar que dois "cabeças" caiam juntos.
-3. O restante dos jogadores é embaralhado e distribuído até completar o
-   tamanho do time.
-4. Quem sobra (lista não fecha um número exato de times) vai para a lista de
-   reservas.
+4. O restante dos jogadores é embaralhado e distribuído entre os times o mais
+   equilibrado possível. Quando a lista não divide um número exato de
+   jogadores por time, o(s) time(s) com menos jogadores é(são) sempre o(s)
+   último(s) (ex.: 3 times para 10 jogadores → 4, 3, 3; nunca 3, 4, 3).
 
 A lógica pura do sorteio está em `src/teamDraw.js` e pode ser testada sem
 WhatsApp: `npm test`.

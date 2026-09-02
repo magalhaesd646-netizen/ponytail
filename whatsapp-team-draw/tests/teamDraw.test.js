@@ -10,9 +10,9 @@ function makePlayers(count, { goalkeepers = 0, seeds = 0 } = {}) {
   }));
 }
 
-test("splits players into teams of the requested size", () => {
+test("splits players evenly when the list divides exactly", () => {
   const players = makePlayers(12, { goalkeepers: 2 });
-  const { teams, reserves } = drawTeams(players, { teamSize: 5 });
+  const { teams, reserves } = drawTeams(players, { numberOfTeams: 2 });
   assert.equal(teams.length, 2);
   for (const team of teams) assert.equal(team.players.length, 5);
   assert.equal(reserves.length, 0);
@@ -20,7 +20,7 @@ test("splits players into teams of the requested size", () => {
 
 test("assigns exactly one goalkeeper per team and excludes them from the draw pool", () => {
   const players = makePlayers(12, { goalkeepers: 2 });
-  const { teams } = drawTeams(players, { teamSize: 5 });
+  const { teams } = drawTeams(players, { numberOfTeams: 2 });
   for (const team of teams) {
     assert.ok(team.goalkeeper);
     assert.equal(team.goalkeeper.isGoalkeeper, true);
@@ -30,23 +30,31 @@ test("assigns exactly one goalkeeper per team and excludes them from the draw po
 
 test("spreads seeded players one per team before filling the rest", () => {
   const players = makePlayers(10, { goalkeepers: 2, seeds: 2 });
-  const { teams } = drawTeams(players, { teamSize: 5 });
+  const { teams } = drawTeams(players, { numberOfTeams: 2 });
   for (const team of teams) {
     assert.equal(team.players.filter((p) => p.isSeed).length, 1);
   }
 });
 
-test("puts players that don't fit into reserves", () => {
+test("never lands anyone in reserves — every player joins a team", () => {
   const players = makePlayers(13, { goalkeepers: 2 });
-  const { teams, reserves } = drawTeams(players, { teamSize: 5 });
+  const { teams, reserves } = drawTeams(players, { numberOfTeams: 3 });
   const totalOnTeams = teams.reduce((sum, t) => sum + t.players.length, 0);
-  assert.equal(totalOnTeams, 10);
-  assert.equal(reserves.length, 1);
+  assert.equal(totalOnTeams, 11);
+  assert.equal(reserves.length, 0);
+});
+
+test("puts the smaller team(s) always last, never in the middle", () => {
+  // 10 outfield players across 3 teams: 4, 3, 3.
+  const players = makePlayers(10);
+  const { teams } = drawTeams(players, { numberOfTeams: 3 });
+  const sizes = teams.map((t) => t.players.length);
+  assert.deepEqual(sizes, [4, 3, 3]);
 });
 
 test("never loses or duplicates a player", () => {
   const players = makePlayers(23, { goalkeepers: 3, seeds: 4 });
-  const { teams, reserves } = drawTeams(players, { teamSize: 5 });
+  const { teams, reserves } = drawTeams(players, { numberOfTeams: 4 });
   const allNames = [
     ...teams.flatMap((t) => (t.goalkeeper ? [t.goalkeeper.name] : [])),
     ...teams.flatMap((t) => t.players.map((p) => p.name)),
@@ -55,33 +63,28 @@ test("never loses or duplicates a player", () => {
   assert.deepEqual(allNames, players.map((p) => p.name).sort());
 });
 
-test("rejects an invalid team size", () => {
-  assert.throws(() => drawTeams(makePlayers(5), { teamSize: 0 }));
+test("rejects an invalid number of teams", () => {
+  assert.throws(() => drawTeams(makePlayers(5), { numberOfTeams: 0 }));
 });
 
 test("draws the exact number of teams requested (2 to 4)", () => {
   const players = makePlayers(20, { goalkeepers: 4 });
   for (const numberOfTeams of [2, 3, 4]) {
-    const { teams } = drawTeams(players, { teamSize: 5, numberOfTeams });
+    const { teams } = drawTeams(players, { numberOfTeams });
     assert.equal(teams.length, numberOfTeams);
   }
 });
 
-test("parseDrawArgs defaults to team size 5 and no explicit team count", () => {
-  assert.deepEqual(parseDrawArgs([]), { teamSize: 5, numberOfTeams: undefined });
+test("parseDrawArgs defaults to 2 teams", () => {
+  assert.deepEqual(parseDrawArgs([]), { numberOfTeams: 2 });
 });
 
-test("parseDrawArgs reads team size and number of teams from args", () => {
-  assert.deepEqual(parseDrawArgs(["6", "3"]), { teamSize: 6, numberOfTeams: 3 });
-});
-
-test("parseDrawArgs rejects an invalid team size", () => {
-  assert.throws(() => parseDrawArgs(["0"]));
-  assert.throws(() => parseDrawArgs(["abc"]));
+test("parseDrawArgs reads the number of teams from args", () => {
+  assert.deepEqual(parseDrawArgs(["3"]), { numberOfTeams: 3 });
 });
 
 test("parseDrawArgs rejects a number of teams outside 2-4", () => {
-  assert.throws(() => parseDrawArgs(["5", "1"]));
-  assert.throws(() => parseDrawArgs(["5", "5"]));
-  assert.throws(() => parseDrawArgs(["5", "abc"]));
+  assert.throws(() => parseDrawArgs(["1"]));
+  assert.throws(() => parseDrawArgs(["5"]));
+  assert.throws(() => parseDrawArgs(["abc"]));
 });

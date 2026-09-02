@@ -74,8 +74,8 @@ client.on("message", async (message) => {
 
     case "!sortear": {
       try {
-        const { teamSize, numberOfTeams } = parseDrawArgs(args);
-        const result = drawTeams(store.getChatPlayers(chatId), { teamSize, numberOfTeams });
+        const { numberOfTeams } = parseDrawArgs(args);
+        const result = drawTeams(store.getChatPlayers(chatId), { numberOfTeams });
         message.reply(formatDraw(result));
       } catch (err) {
         message.reply(`Não deu pra sortear: ${err.message}`);
@@ -91,7 +91,7 @@ client.on("message", async (message) => {
           "!goleiro - marca/desmarca você como goleiro fixo",
           "!cabeca - marca/desmarca você como cabeça de chave",
           "!lista - mostra a lista atual",
-          "!sortear [tamanho] [quantidade de times] - sorteia os times (padrão: 5 por time; quantidade de times de 2 a 4, calculada automaticamente se omitida)",
+          "!sortear [quantidade de times] - sorteia os times (2 a 4, padrão: 2). Se não fechar uma divisão exata, o último time fica com menos jogadores.",
           "!limpar - zera a lista",
         ].join("\n"),
       );

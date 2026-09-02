@@ -1,6 +1,6 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
-const { drawTeams } = require("../src/teamDraw");
+const { drawTeams, parseDrawArgs } = require("../src/teamDraw");
 
 function makePlayers(count, { goalkeepers = 0, seeds = 0 } = {}) {
   return Array.from({ length: count }, (_, i) => ({
@@ -57,4 +57,31 @@ test("never loses or duplicates a player", () => {
 
 test("rejects an invalid team size", () => {
   assert.throws(() => drawTeams(makePlayers(5), { teamSize: 0 }));
+});
+
+test("draws the exact number of teams requested (2 to 4)", () => {
+  const players = makePlayers(20, { goalkeepers: 4 });
+  for (const numberOfTeams of [2, 3, 4]) {
+    const { teams } = drawTeams(players, { teamSize: 5, numberOfTeams });
+    assert.equal(teams.length, numberOfTeams);
+  }
+});
+
+test("parseDrawArgs defaults to team size 5 and no explicit team count", () => {
+  assert.deepEqual(parseDrawArgs([]), { teamSize: 5, numberOfTeams: undefined });
+});
+
+test("parseDrawArgs reads team size and number of teams from args", () => {
+  assert.deepEqual(parseDrawArgs(["6", "3"]), { teamSize: 6, numberOfTeams: 3 });
+});
+
+test("parseDrawArgs rejects an invalid team size", () => {
+  assert.throws(() => parseDrawArgs(["0"]));
+  assert.throws(() => parseDrawArgs(["abc"]));
+});
+
+test("parseDrawArgs rejects a number of teams outside 2-4", () => {
+  assert.throws(() => parseDrawArgs(["5", "1"]));
+  assert.throws(() => parseDrawArgs(["5", "5"]));
+  assert.throws(() => parseDrawArgs(["5", "abc"]));
 });

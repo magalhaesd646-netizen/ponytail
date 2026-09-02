@@ -28,11 +28,14 @@ qualquer conversa (grupo ou individual) onde estiver presente.
 | `!goleiro` | Marca/desmarca você como goleiro fixo do seu time |
 | `!cabeca` | Marca/desmarca você como cabeça de chave |
 | `!lista` | Mostra a lista atual |
-| `!sortear [tamanho]` | Sorteia os times (padrão: 5 jogadores de linha por time) |
+| `!sortear [tamanho] [qtd. de times]` | Sorteia os times (padrão: 5 jogadores de linha por time; quantidade de times de 2 a 4, calculada automaticamente se omitida) |
 | `!limpar` | Zera a lista |
 
 ## Como funciona o sorteio
 
+1. É possível escolher a quantidade de times no próprio comando (de 2 a 4);
+   se omitida, é calculada automaticamente pela quantidade de goleiros fixos
+   ou pelo tamanho de time desejado.
 1. Cada goleiro marcado com `!goleiro` é distribuído um por time (sorteado
    entre os times, não entra na disputa por vaga de linha).
 2. Os cabeças de chave são embaralhados e espalhados um por time antes do

@@ -1,6 +1,6 @@
 const { Client, LocalAuth } = require("whatsapp-web.js");
 const qrcode = require("qrcode-terminal");
-const { drawTeams } = require("./teamDraw");
+const { drawTeams, parseDrawArgs } = require("./teamDraw");
 const store = require("./store");
 
 const client = new Client({ authStrategy: new LocalAuth() });
@@ -36,7 +36,7 @@ client.on("message", async (message) => {
   const chatId = chat.id._serialized;
   const senderId = contact.id._serialized;
   const senderName = contact.pushname || contact.number;
-  const [command, arg] = message.body.trim().split(/\s+/);
+  const [command, ...args] = message.body.trim().split(/\s+/);
 
   switch (command) {
     case "!entrar":
@@ -73,12 +73,9 @@ client.on("message", async (message) => {
       break;
 
     case "!sortear": {
-      const teamSize = arg ? Number(arg) : 5;
-      if (!Number.isInteger(teamSize) || teamSize < 1) {
-        return message.reply("Tamanho de time inválido. Use: !sortear 5");
-      }
       try {
-        const result = drawTeams(store.getChatPlayers(chatId), { teamSize });
+        const { teamSize, numberOfTeams } = parseDrawArgs(args);
+        const result = drawTeams(store.getChatPlayers(chatId), { teamSize, numberOfTeams });
         message.reply(formatDraw(result));
       } catch (err) {
         message.reply(`Não deu pra sortear: ${err.message}`);
@@ -94,7 +91,7 @@ client.on("message", async (message) => {
           "!goleiro - marca/desmarca você como goleiro fixo",
           "!cabeca - marca/desmarca você como cabeça de chave",
           "!lista - mostra a lista atual",
-          "!sortear [tamanho] - sorteia os times (padrão: 5 por time)",
+          "!sortear [tamanho] [quantidade de times] - sorteia os times (padrão: 5 por time; quantidade de times de 2 a 4, calculada automaticamente se omitida)",
           "!limpar - zera a lista",
         ].join("\n"),
       );

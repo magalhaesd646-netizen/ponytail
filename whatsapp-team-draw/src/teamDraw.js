@@ -72,4 +72,28 @@ function drawTeams(players, options = {}) {
   };
 }
 
-module.exports = { drawTeams };
+const MIN_TEAMS = 2;
+const MAX_TEAMS = 4;
+
+// Parses the `!sortear [tamanho] [quantidade de times]` arguments.
+// numberOfTeams is optional: when omitted, drawTeams picks it automatically
+// (one per fixed goalkeeper, or enough to fit teamSize).
+function parseDrawArgs(args) {
+  const teamSize = args[0] !== undefined ? Number(args[0]) : 5;
+  if (!Number.isInteger(teamSize) || teamSize < 1) {
+    throw new Error("Tamanho de time inválido. Use: !sortear 5");
+  }
+
+  if (args[1] === undefined) {
+    return { teamSize, numberOfTeams: undefined };
+  }
+
+  const numberOfTeams = Number(args[1]);
+  if (!Number.isInteger(numberOfTeams) || numberOfTeams < MIN_TEAMS || numberOfTeams > MAX_TEAMS) {
+    throw new Error(`Quantidade de times inválida. Escolha entre ${MIN_TEAMS} e ${MAX_TEAMS}. Use: !sortear 5 3`);
+  }
+
+  return { teamSize, numberOfTeams };
+}
+
+module.exports = { drawTeams, parseDrawArgs, MIN_TEAMS, MAX_TEAMS };

@@ -91,7 +91,7 @@ client.on("message", async (message) => {
           "!goleiro - marca/desmarca você como goleiro fixo",
           "!cabeca - marca/desmarca você como cabeça de chave",
           "!lista - mostra a lista atual",
-          "!sortear [quantidade de times] - sorteia os times (2 a 4, padrão: 2), com pelo menos 5 jogadores de linha em cada. Se não fechar uma divisão exata, o último time fica com menos jogadores (nunca menos de 5).",
+          "!sortear [quantidade de times] - sorteia os times (2 a 4, padrão: 2). Se não fechar uma divisão exata, o último time fica com menos jogadores.",
           "!limpar - zera a lista",
         ].join("\n"),
       );

@@ -1,0 +1,92 @@
+name: dovale-comercial
+
+on:
+  schedule:
+    # A cada hora: importa PDFs novos em uploads/ e dispara os agendamentos
+    # recorrentes que estiverem devidos — funciona mesmo sem ninguém com o
+    # servidor local (npm start) ligado.
+    - cron: '0 * * * *'
+  workflow_dispatch:
+    inputs:
+      acao:
+        description: 'O que rodar'
+        type: choice
+        default: 'importar-e-agendados'
+        options:
+          - importar-e-agendados
+          - enviar-campanha-manual
+      lista:
+        description: 'Lista (só para enviar-campanha-manual): construtoras | advocacia | sindicos'
+        type: string
+        default: ''
+      assunto:
+        description: 'Assunto do e-mail (só para enviar-campanha-manual)'
+        type: string
+        default: ''
+      corpo_html:
+        description: 'Corpo do e-mail em HTML (só para enviar-campanha-manual; use {{nome}}, {{empresa}}, {{cidade}})'
+        type: string
+        default: ''
+
+defaults:
+  run:
+    working-directory: dovale-comercial
+
+jobs:
+  disparo:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # commitar data/*.json (contatos, campanhas, agendamentos)
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Instalar dependências
+        run: npm install
+
+      - name: Importar PDFs novos (uploads/<lista>/*.pdf)
+        run: npm run import-pdfs
+
+      - name: Rodar agendamentos recorrentes devidos
+        env:
+          SMTP_HOST: ${{ vars.DOVALE_SMTP_HOST }}
+          SMTP_PORT: ${{ vars.DOVALE_SMTP_PORT }}
+          SMTP_USER: ${{ secrets.DOVALE_SMTP_USER }}
+          SMTP_PASS: ${{ secrets.DOVALE_SMTP_PASS }}
+          FROM_NAME: ${{ vars.DOVALE_FROM_NAME }}
+          EMAIL_SIGNATURE: ${{ vars.DOVALE_EMAIL_SIGNATURE }}
+          SEND_DELAY_MS: ${{ vars.DOVALE_SEND_DELAY_MS }}
+          SEND_DAILY_LIMIT: ${{ vars.DOVALE_SEND_DAILY_LIMIT }}
+        run: npm run run-scheduler
+
+      - name: Disparo manual (só quando acionado via workflow_dispatch)
+        if: inputs.acao == 'enviar-campanha-manual'
+        env:
+          SMTP_HOST: ${{ vars.DOVALE_SMTP_HOST }}
+          SMTP_PORT: ${{ vars.DOVALE_SMTP_PORT }}
+          SMTP_USER: ${{ secrets.DOVALE_SMTP_USER }}
+          SMTP_PASS: ${{ secrets.DOVALE_SMTP_PASS }}
+          FROM_NAME: ${{ vars.DOVALE_FROM_NAME }}
+          EMAIL_SIGNATURE: ${{ vars.DOVALE_EMAIL_SIGNATURE }}
+          SEND_DELAY_MS: ${{ vars.DOVALE_SEND_DELAY_MS }}
+          SEND_DAILY_LIMIT: ${{ vars.DOVALE_SEND_DAILY_LIMIT }}
+          LISTA: ${{ inputs.lista }}
+          ASSUNTO: ${{ inputs.assunto }}
+          CORPO_HTML: ${{ inputs.corpo_html }}
+        run: npm run send-campaign
+
+      - name: Salvar bases e histórico atualizados
+        if: always()
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/ uploads/
+          if git diff --cached --quiet; then
+            echo "Nenhuma mudança para salvar."
+          else
+            git commit -m "chore(dovale-comercial): atualiza contatos/campanhas/agendamentos"
+            git push
+          fi

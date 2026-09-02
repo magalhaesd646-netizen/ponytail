@@ -2,8 +2,10 @@ name: vale-paraiba-lancamentos
 
 on:
   schedule:
-    # 11:00 UTC ~= 08:00 horário de Brasília (UTC-3, sem horário de verão)
-    - cron: '0 11 * * *'
+    # 11:00 UTC ~= 08:00 horário de Brasília (UTC-3, sem horário de verão).
+    # A cada 3 dias (dias 1,4,7,... do mês) — volume de lançamentos não
+    # justifica rodar todo dia e isso também poupa cota de busca.
+    - cron: '0 11 */3 * *'
   workflow_dispatch: {}
 
 defaults:

@@ -1,0 +1,102 @@
+{
+  "atualizadoEm": "2026-08-30",
+  "metodologia": "Lista curada com base em rankings públicos do setor (Ranking INTEC — maiores construtoras do Brasil por metragem construída; Top Imobiliário — maiores incorporadoras por VGV/vendas na cidade de São Paulo; Econodata — maiores construtoras do estado de SP por faturamento). Não existe um único ranking oficial só do estado de SP: os critérios variam por fonte, por isso cada empresa abaixo indica de qual ranking/critério vem seu destaque.",
+  "construtoras": [
+    {
+      "posicao": 1,
+      "nome": "Direcional Engenharia",
+      "destaque": "1º lugar no Ranking INTEC 2025/2026 — maior construtora do Brasil por metragem construída",
+      "site": "https://www.direcional.com.br",
+      "contato": { "tipo": "portal", "url": "https://www.direcional.com.br/contato-direcional/", "label": "Seja um fornecedor / Fale conosco" },
+      "fonte": "https://www.direcional.com.br/blog/direcional/ranking-intec-2025/"
+    },
+    {
+      "posicao": 2,
+      "nome": "Cyrela",
+      "destaque": "Líder em vendas e incorporação na cidade de São Paulo (Top Imobiliário 2025), com VGV de R$ 9,6 bilhões",
+      "site": "https://www.cyrela.com.br",
+      "contato": { "tipo": "email", "email": "ri@cyrela.com.br", "label": "Relações com Investidores (fornecedores via formulário no site)" },
+      "fonte": "https://www.cyrela.com.br/fale-conosco/fornecedores"
+    },
+    {
+      "posicao": 3,
+      "nome": "Cury Construtora",
+      "destaque": "Top 5 do Ranking INTEC 2025; R$ 8,2 bilhões em VGV e mais de 27 mil unidades lançadas em 2025",
+      "site": "https://cury.net",
+      "contato": { "tipo": "portal", "url": "https://fornecedores.cury.net", "label": "Portal de cadastro de fornecedores" },
+      "fonte": "https://100maioresconstrutoras.com.br/ranking-intec-2025/"
+    },
+    {
+      "posicao": 4,
+      "nome": "Tenda",
+      "destaque": "Uma das maiores construtoras do estado de SP por faturamento (Econodata) e Top 10 do Ranking INTEC",
+      "site": "https://www.tenda.com",
+      "contato": { "tipo": "portal", "url": "https://tenda.com/sobre-a-tenda/fale-com-a-tenda", "label": "Fale com a Tenda" },
+      "fonte": "https://www.econodata.com.br/maiores-empresas/sp-sao-paulo/busca-construtora"
+    },
+    {
+      "posicao": 5,
+      "nome": "EZTEC",
+      "destaque": "Referência em qualidade construtiva na capital paulista — 4º Prêmio Master Imobiliário em 2024",
+      "site": "https://www.eztec.com.br",
+      "contato": { "tipo": "email", "email": "sac@eztec.com.br", "label": "SAC (fornecedores via formulário no site)" },
+      "fonte": "https://www.eztec.com.br/contato/fornecedor/"
+    },
+    {
+      "posicao": 6,
+      "nome": "Even",
+      "destaque": "Entre as maiores construtoras do estado de SP por faturamento (Econodata)",
+      "site": "https://www.even.com.br",
+      "contato": { "tipo": "portal", "url": "https://www.even.com.br/fornecedores", "label": "Banco de fornecedores" },
+      "fonte": "https://www.econodata.com.br/maiores-empresas/sp-sao-paulo/busca-construtora"
+    },
+    {
+      "posicao": 7,
+      "nome": "Trisul",
+      "destaque": "Incorporadora paulista consolidada, com atuação na cidade de São Paulo há décadas",
+      "site": "https://www.trisul-sa.com.br",
+      "contato": { "tipo": "portal", "url": "https://www.trisul-sa.com.br/contato", "label": "SAC, Fornecedor e Suprimentos" },
+      "fonte": "https://www.trisul-sa.com.br/central-de-ajuda"
+    },
+    {
+      "posicao": 8,
+      "nome": "Setin Incorporadora",
+      "destaque": "Incorporadora paulista de médio/alto padrão, atuando em São Paulo desde 1979",
+      "site": "https://www.setin.com.br",
+      "contato": { "tipo": "portal", "url": "https://www.setin.com.br/fale-conosco", "label": "Fale conosco" },
+      "fonte": "https://www.setin.com.br"
+    },
+    {
+      "posicao": 9,
+      "nome": "Vitacon",
+      "destaque": "Referência em apartamentos compactos e inteligentes na capital paulista",
+      "site": "https://vitacon.com.br",
+      "contato": { "tipo": "portal", "url": "https://vitacon.com.br/fale-conosco/", "label": "Fale conosco" },
+      "fonte": "https://vitacon.com.br"
+    },
+    {
+      "posicao": 10,
+      "nome": "Grupo Kallas",
+      "destaque": "Construtora e incorporadora paulista, do padrão econômico ao alto padrão",
+      "site": "https://grupokallas.com.br",
+      "contato": { "tipo": "portal", "url": "https://grupokallas.com.br/fale-conosco/", "label": "Fale conosco" },
+      "fonte": "https://grupokallas.com.br"
+    },
+    {
+      "posicao": 11,
+      "nome": "MRV Engenharia",
+      "destaque": "Maior incorporadora de imóveis populares do Brasil, com forte presença no interior de SP",
+      "site": "https://www.mrv.com.br",
+      "contato": { "tipo": "portal", "url": "https://www.mrv.com.br/institucional/pt/relacionamentos/fornecedores", "label": "Relacionamento com fornecedores" },
+      "fonte": "https://www.mrv.com.br"
+    },
+    {
+      "posicao": 12,
+      "nome": "Plaenge",
+      "destaque": "Top 5 do Ranking INTEC 2025 nacional, com empreendimentos também no estado de SP",
+      "site": "https://www.plaenge.com.br",
+      "contato": { "tipo": "email", "email": "cadastrofornecedor-ldb@plaenge.com.br", "label": "Suporte ao portal de fornecedores" },
+      "fonte": "https://100maioresconstrutoras.com.br/ranking-intec-2025/"
+    }
+  ]
+}

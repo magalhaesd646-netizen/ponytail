@@ -46,14 +46,15 @@ function countBy(rows, getKey) {
 
 const MESES = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
 
-// A coluna "Data" vem no formato dd/mm/aaaa (data de abertura do chamado).
+// A coluna "Data" vem no formato dd/mm/aaaa (usada tanto pelos chamados de
+// pós-obra quanto pelas vistorias — cada linha lida de acordo).
 function parseDataBR(value) {
   const match = String(value ?? '').trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
   if (!match) return null;
   return { year: Number(match[3]), month: Number(match[2]) - 1 };
 }
 
-// Chamados por mês de abertura, em ordem cronológica (não por volume) — é
+// Quantidade de linhas por mês, em ordem cronológica (não por volume) — é
 // uma série temporal, faz sentido lida da esquerda pra direita.
 function porMesDe(rows) {
   const counts = new Map();

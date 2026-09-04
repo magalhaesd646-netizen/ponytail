@@ -10,6 +10,11 @@ function extractFileId(url) {
   throw new Error('Não foi possível extrair o ID do arquivo do link do Google Drive');
 }
 
+function looksLikeZip(buffer) {
+  // Um .xlsx é um .zip por dentro — todo arquivo zip começa com "PK".
+  return buffer.length > 2 && buffer[0] === 0x50 && buffer[1] === 0x4b;
+}
+
 async function fetchWorkbook(shareUrl) {
   const id = extractFileId(shareUrl);
   const downloadUrl = `https://drive.google.com/uc?export=download&id=${id}`;
@@ -20,9 +25,9 @@ async function fetchWorkbook(shareUrl) {
   // Arquivos grandes (ou que o Google não consegue escanear) respondem com
   // uma página HTML de confirmação em vez do arquivo — extrai o token
   // `confirm` dela e refaz o pedido.
-  const contentType = res.headers.get('content-type') || '';
-  if (res.ok && contentType.includes('text/html')) {
-    const confirmMatch = buffer.toString('utf8').match(/confirm=([0-9A-Za-z_-]+)/);
+  if (res.ok && !looksLikeZip(buffer)) {
+    const html = buffer.toString('utf8');
+    const confirmMatch = html.match(/confirm=([0-9A-Za-z_-]+)/);
     if (confirmMatch) {
       res = await fetch(`${downloadUrl}&confirm=${confirmMatch[1]}`, { redirect: 'follow' });
       buffer = Buffer.from(await res.arrayBuffer());
@@ -31,6 +36,12 @@ async function fetchWorkbook(shareUrl) {
 
   if (!res.ok) {
     throw new Error(`Falha ao baixar planilha do Google Drive (HTTP ${res.status})`);
+  }
+  if (!looksLikeZip(buffer)) {
+    const preview = buffer.toString('utf8').slice(0, 300).replace(/\s+/g, ' ');
+    throw new Error(
+      `O Google Drive não devolveu o arquivo .xlsx (content-type: ${res.headers.get('content-type')}) — resposta: ${preview}`
+    );
   }
   return buffer;
 }

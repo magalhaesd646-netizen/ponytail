@@ -16,10 +16,10 @@ function normalizeKey(name) {
     .replace(/\s+/g, ' ');
 }
 
-function countByNormalized(rows, getRaw) {
+function countByNormalized(rows, getRaw, emptyLabel = '(sem empreendimento)') {
   const groups = new Map(); // key -> Map(rawLabel -> count)
   for (const row of rows) {
-    const raw = String(getRaw(row) ?? '').trim() || '(sem empreendimento)';
+    const raw = String(getRaw(row) ?? '').trim() || emptyLabel;
     const key = normalizeKey(raw);
     if (!groups.has(key)) groups.set(key, new Map());
     const variants = groups.get(key);
@@ -93,4 +93,24 @@ function summarizePosObra(rows) {
   return { totalChamados: total, porEmpreendimento, porFamilia, porMes: porMesDe(rows) };
 }
 
-module.exports = { summarizePosObra };
+// Resumo do arquivo de vistorias: cada linha já é uma não conformidade (o
+// link só traz os itens "Não conforme"), então o resumo é simplesmente a
+// contagem por obra e por tipo de vistoria ("Modelo").
+function summarizeVistorias(rows) {
+  const porObra = countByNormalized(rows, (row) => row.Obra, '(sem obra)').map(([obra, total]) => ({
+    obra,
+    total,
+  }));
+
+  const porModeloCounts = countBy(rows, (row) => String(row.Modelo ?? '').trim() || '(sem modelo)');
+  const total = rows.length;
+  const porModelo = porModeloCounts.map(([modelo, count]) => ({
+    modelo,
+    total: count,
+    percentual: total ? Math.round((count / total) * 1000) / 10 : 0,
+  }));
+
+  return { totalNC: total, porObra, porModelo, porMes: porMesDe(rows) };
+}
+
+module.exports = { summarizePosObra, summarizeVistorias };

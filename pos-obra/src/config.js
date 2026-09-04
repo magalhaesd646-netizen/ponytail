@@ -1,6 +1,6 @@
 'use strict';
 
-const { summarizePosObra } = require('./lib/summarize');
+const { summarizePosObra, summarizeVistorias } = require('./lib/summarize');
 
 // Uma aba por linha aqui. Cada uma vira uma aba no painel (web/index.html) e
 // um arquivo de dados (web/data/<id>.json), lido a partir da planilha
@@ -21,6 +21,7 @@ const TABS = [
     label: 'Vistorias de Qualidade e Pós-Obra',
     envVar: 'VISTORIAS_SHEET_URL',
     sheetNameEnvVar: 'VISTORIAS_SHEET_NAME',
+    summarize: summarizeVistorias,
   },
   {
     id: 'agenda',

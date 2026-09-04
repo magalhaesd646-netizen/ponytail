@@ -5,7 +5,7 @@ const assert = require('node:assert/strict');
 const { encodeShareUrl } = require('../src/lib/oneDrive');
 
 test('encodeShareUrl produces a url-safe "u!" token that decodes back to the original url', () => {
-  const url = 'https://dovaleengenharia-my.sharepoint.com/:x:/g/personal/abc/EXAMPLE?e=xyz';
+  const url = 'https://example-my.sharepoint.com/:x:/g/personal/abc/EXAMPLE?e=xyz';
   const token = encodeShareUrl(url);
 
   assert.ok(token.startsWith('u!'));

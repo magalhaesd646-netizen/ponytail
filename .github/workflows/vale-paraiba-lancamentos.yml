@@ -58,7 +58,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           # web/data.json também é comitado (além do estado seen.json) para
-          # que o painel de pós-obra (dovale-pos-obra), que roda todo dia e
+          # que o painel de pós-obra (pos-obra), que roda todo dia e
           # compartilha o mesmo site do GitHub Pages, consiga remontar este
           # painel com dados atuais sem precisar rodar esta busca de novo.
           git add data/seen.json web/data.json
@@ -73,7 +73,7 @@ jobs:
         run: cp -r ../investimentos web/investimentos
 
       - name: Incluir painel de pós-obra no mesmo painel
-        run: cp -r ../dovale-pos-obra/web web/dovale-pos-obra
+        run: cp -r ../pos-obra/web web/pos-obra
 
       - name: Publicar painel como artefato (para o job de deploy)
         uses: actions/upload-artifact@v4

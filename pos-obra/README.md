@@ -1,12 +1,12 @@
-# Dovale Pós-Obra
+# Pós-Obra
 
-Painel para centralizar as visualizações do pós-obra da Dovale Engenharia,
-com três abas — **Pós-Obra**, **Vistorias de Qualidade e Pós-Obra** e
-**Agenda Pós-Obra** — cada uma mostrando uma tabela puxada automaticamente
-de uma planilha Excel no OneDrive/SharePoint, atualizada todo dia sozinha
-(GitHub Actions). Cada aba também pode abrir um link externo (ex.: o app à
-parte que ela vai virar no futuro) assim que você tiver esse link — veja
-"Link externo por aba" abaixo.
+Painel para centralizar as visualizações do pós-obra, com três abas —
+**Pós-Obra**, **Vistorias de Qualidade e Pós-Obra** e **Agenda Pós-Obra** —
+cada uma mostrando uma tabela puxada automaticamente de uma planilha Excel
+no OneDrive/SharePoint, atualizada todo dia sozinha (GitHub Actions). Cada
+aba também pode abrir um link externo (ex.: o app à parte que ela vai virar
+no futuro) assim que você tiver esse link — veja "Link externo por aba"
+abaixo.
 
 ## Configuração inicial (planilhas)
 
@@ -29,11 +29,11 @@ parte que ela vai virar no futuro) assim que você tiver esse link — veja
 
 ## Automação diária (GitHub Actions)
 
-O workflow `.github/workflows/dovale-pos-obra.yml` roda todo dia sozinho:
-busca as três planilhas, regenera `web/data/*.json`, comita esse resultado
-(histórico de dados, igual ao `data/seen.json` do vale-paraiba-lancamentos)
-e publica o painel no GitHub Pages. Configure em **Settings → Secrets and
-variables → Actions** do repositório:
+O workflow `.github/workflows/pos-obra.yml` roda todo dia sozinho: busca as
+três planilhas, regenera `web/data/*.json`, comita esse resultado (histórico
+de dados, igual ao `data/seen.json` do vale-paraiba-lancamentos) e publica o
+painel no GitHub Pages. Configure em **Settings → Secrets and variables →
+Actions** do repositório:
 
 | Nome | Tipo | Obrigatório |
 | --- | --- | --- |
@@ -48,13 +48,13 @@ outras continuam funcionando normalmente.
 **GitHub Pages**: este repositório publica um único site (GitHub Pages só
 permite um por repositório). O mesmo site já é usado pelo
 `vale-paraiba-lancamentos` (que embute o `investimentos`); o painel de
-pós-obra é publicado dentro dele, em `/dovale-pos-obra/`. Se o Pages ainda
-não estiver habilitado, veja o README do `vale-paraiba-lancamentos` ("Passo
+pós-obra é publicado dentro dele, em `/pos-obra/`. Se o Pages ainda não
+estiver habilitado, veja o README do `vale-paraiba-lancamentos` ("Passo
 único: habilitar o GitHub Pages") — só precisa ser feito uma vez. As duas
-automações (`dovale-pos-obra` todo dia, `vale-paraiba-lancamentos` a cada 3
-dias) reconstroem o site inteiro (as duas abas) a cada execução, então o
-painel de pós-obra fica sempre atualizado independentemente de qual delas
-rodou por último.
+automações (`pos-obra` todo dia, `vale-paraiba-lancamentos` a cada 3 dias)
+reconstroem o site inteiro (as duas abas) a cada execução, então o painel de
+pós-obra fica sempre atualizado independentemente de qual delas rodou por
+último.
 
 ## Link externo por aba
 

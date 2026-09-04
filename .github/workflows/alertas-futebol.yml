@@ -1,0 +1,54 @@
+name: alertas-futebol
+
+on:
+  schedule:
+    # A cada 15 minutos. Espaçado de propósito: o plano free da API-Football
+    # tem cota diária baixa e cada rodada gasta 1 requisição + 1 por partida
+    # ao vivo (veja "Limites da API" no README). Ajuste com cuidado.
+    - cron: '*/15 * * * *'
+  workflow_dispatch: {}
+
+defaults:
+  run:
+    working-directory: alertas-futebol
+
+jobs:
+  monitor:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # commitar data/notified.json e data/alerts-log.json
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Instalar dependências
+        run: npm install
+
+      - name: Rodar monitor de partidas ao vivo
+        env:
+          FOOTBALL_API_KEY: ${{ secrets.FOOTBALL_ALERTAS_API_KEY }}
+          FOOTBALL_API_PROVIDER: ${{ vars.FOOTBALL_ALERTAS_API_PROVIDER }}
+          MAX_FIXTURES_PER_RUN: ${{ vars.FOOTBALL_ALERTAS_MAX_FIXTURES }}
+          SMTP_HOST: ${{ secrets.FOOTBALL_ALERTAS_SMTP_HOST }}
+          SMTP_PORT: ${{ vars.FOOTBALL_ALERTAS_SMTP_PORT }}
+          SMTP_USER: ${{ secrets.FOOTBALL_ALERTAS_SMTP_USER }}
+          SMTP_PASS: ${{ secrets.FOOTBALL_ALERTAS_SMTP_PASS }}
+          FROM_NAME: ${{ vars.FOOTBALL_ALERTAS_FROM_NAME }}
+          ALERT_EMAIL_TO: ${{ secrets.FOOTBALL_ALERTAS_EMAIL_TO }}
+          ALERT_WEBHOOK_URL: ${{ secrets.FOOTBALL_ALERTAS_WEBHOOK_URL }}
+        run: npm run check-now
+
+      - name: Salvar estado atualizado (alertas já notificados e histórico)
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/notified.json data/alerts-log.json
+          if git diff --cached --quiet; then
+            echo "Nenhuma mudança para salvar."
+          else
+            git commit -m "chore(alertas-futebol): atualiza estado de alertas monitorados"
+            git push
+          fi

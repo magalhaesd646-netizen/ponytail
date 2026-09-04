@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Alertas de Futebol</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <header>
+    <h1>⚽ Alertas de Futebol</h1>
+    <p class="subtitle">
+      Escolha as ligas e defina regras (chutes a gol, escanteios, posse de bola...)
+      para ser avisado durante o jogo.
+    </p>
+  </header>
+
+  <main class="panel">
+    <section class="card">
+      <h2>Ligas monitoradas</h2>
+      <div id="leagues" class="leagues-grid">Carregando...</div>
+    </section>
+
+    <section class="card">
+      <h2>Regras de alerta</h2>
+      <table id="rules-table">
+        <thead>
+          <tr>
+            <th>Liga</th>
+            <th>Time</th>
+            <th>Estatística</th>
+            <th>Condição</th>
+            <th>Valor</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="rules-body"></tbody>
+      </table>
+
+      <form id="add-rule-form" class="rule-form">
+        <select id="rule-league">
+          <option value="">Todas as ligas selecionadas</option>
+        </select>
+        <select id="rule-scope">
+          <option value="either">Qualquer time</option>
+          <option value="home">Mandante</option>
+          <option value="away">Visitante</option>
+        </select>
+        <select id="rule-metric"></select>
+        <select id="rule-comparator">
+          <option value="gte">≥ maior ou igual a</option>
+          <option value="lte">≤ menor ou igual a</option>
+          <option value="eq">= igual a</option>
+        </select>
+        <input id="rule-value" type="number" step="1" placeholder="valor" required />
+        <button type="submit">Adicionar regra</button>
+      </form>
+    </section>
+
+    <section class="card">
+      <button id="save-config">Salvar configuração</button>
+      <button id="check-now" class="secondary">Testar agora</button>
+      <span id="save-status" class="status"></span>
+    </section>
+
+    <section class="card">
+      <h2>Partidas ao vivo agora</h2>
+      <button id="refresh-live" class="secondary">Atualizar</button>
+      <div id="live-fixtures" class="fixtures-list"></div>
+    </section>
+
+    <section class="card">
+      <h2>Últimos alertas enviados</h2>
+      <div id="alerts-log" class="alerts-log"></div>
+    </section>
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>

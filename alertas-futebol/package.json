@@ -1,0 +1,20 @@
+{
+  "name": "alertas-futebol",
+  "version": "1.0.0",
+  "description": "Avisos configuráveis (chutes a gol, escanteios, posse de bola, cartões...) para jogos ao vivo das principais ligas de futebol do mundo",
+  "private": true,
+  "main": "src/server.js",
+  "scripts": {
+    "start": "node src/server.js",
+    "check-now": "node scripts/run-monitor.js",
+    "list-leagues": "node scripts/list-leagues.js",
+    "test": "node --test tests/*.test.js"
+  },
+  "dependencies": {
+    "axios": "^1.7.7",
+    "dotenv": "^16.4.5",
+    "express": "^4.21.1",
+    "node-cron": "^4.6.0",
+    "nodemailer": "^9.1.1"
+  }
+}

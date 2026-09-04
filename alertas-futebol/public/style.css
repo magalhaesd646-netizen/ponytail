@@ -1,0 +1,80 @@
+:root {
+  color-scheme: light;
+  --bg: #f4f7f5;
+  --card: #ffffff;
+  --border: #dde5e0;
+  --text: #1b1f1c;
+  --muted: #5c6a62;
+  --accent: #1e7d4a;
+  --accent-dark: #145c36;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
+
+header { padding: 24px clamp(16px, 5vw, 48px) 8px; }
+header h1 { margin: 0; }
+.subtitle { color: var(--muted); margin: 4px 0 0; }
+
+main.panel {
+  padding: 20px clamp(16px, 5vw, 48px) 48px;
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+.card h2 { margin-top: 0; font-size: 17px; }
+
+.leagues-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 8px 16px;
+}
+.leagues-grid label { display: flex; align-items: center; gap: 8px; }
+
+table { width: 100%; border-collapse: collapse; margin-bottom: 16px; }
+th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--border); font-size: 14px; }
+
+.rule-form { display: flex; flex-wrap: wrap; gap: 8px; }
+.rule-form select, .rule-form input { padding: 6px 8px; border: 1px solid var(--border); border-radius: 6px; }
+.rule-form input#rule-value { width: 90px; }
+
+button {
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  padding: 8px 14px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 14px;
+}
+button:hover { background: var(--accent-dark); }
+button.secondary { background: var(--card); color: var(--accent); border: 1px solid var(--accent); }
+button.secondary:hover { background: #eaf5ee; }
+button.remove-rule { background: none; color: #b3492b; padding: 2px 8px; font-size: 16px; }
+
+.status { margin-left: 12px; color: var(--muted); font-size: 14px; }
+
+.fixtures-list, .alerts-log { display: flex; flex-direction: column; gap: 10px; margin-top: 12px; }
+.fixture-card, .alert-entry {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 14px;
+  font-size: 14px;
+}
+.fixture-card .score { font-weight: 600; }
+.fixture-card .stats { color: var(--muted); margin-top: 4px; }
+.alert-entry .timestamp { color: var(--muted); font-size: 12px; }
+.empty { color: var(--muted); font-size: 14px; }

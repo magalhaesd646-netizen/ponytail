@@ -1,9 +1,20 @@
 'use strict';
 
-// Converte um link de compartilhamento do OneDrive/SharePoint ("Qualquer
-// pessoa com o link pode visualizar") no token usado pela API de shares, e
-// baixa o conteúdo do arquivo direto, sem precisar de login/app registrado.
-// Formato documentado pela Microsoft: https://learn.microsoft.com/onedrive/developer/rest-api/api/shares_get
+// Baixa o conteúdo de um arquivo do OneDrive/SharePoint a partir de um link
+// de compartilhamento ("Qualquer pessoa com o link pode visualizar"), sem
+// precisar de login nem app registrado. Duas estratégias, pois a Microsoft
+// vem migrando contas OneDrive for Business/SharePoint para uma
+// infraestrutura onde só a primeira funciona:
+//
+// 1. Anexar `download=1` na própria URL de compartilhamento — funciona
+//    direto contra o domínio *.sharepoint.com da conta.
+// 2. Endpoint legado da OneDrive API (`api.onedrive.com/v1.0/shares`) —
+//    funciona em contas OneDrive mais antigas, ainda não migradas.
+function toDirectDownloadUrl(shareUrl) {
+  const separator = shareUrl.includes('?') ? '&' : '?';
+  return `${shareUrl}${separator}download=1`;
+}
+
 function encodeShareUrl(url) {
   const base64 = Buffer.from(url.trim(), 'utf8').toString('base64');
   const urlSafe = base64.replace(/=+$/, '').replace(/\//g, '_').replace(/\+/g, '-');
@@ -11,15 +22,22 @@ function encodeShareUrl(url) {
 }
 
 async function fetchWorkbook(shareUrl) {
-  const token = encodeShareUrl(shareUrl);
-  const apiUrl = `https://api.onedrive.com/v1.0/shares/${token}/root/content`;
-  const res = await fetch(apiUrl, { redirect: 'follow' });
-  if (!res.ok) {
+  const attempts = [
+    toDirectDownloadUrl(shareUrl),
+    `https://api.onedrive.com/v1.0/shares/${encodeShareUrl(shareUrl)}/root/content`,
+  ];
+
+  const errors = [];
+  for (const url of attempts) {
+    const res = await fetch(url, { redirect: 'follow' });
+    if (res.ok) {
+      const arrayBuffer = await res.arrayBuffer();
+      return Buffer.from(arrayBuffer);
+    }
     const body = (await res.text().catch(() => '')).slice(0, 300);
-    throw new Error(`Falha ao baixar planilha (HTTP ${res.status})${body ? `: ${body}` : ''}`);
+    errors.push(`HTTP ${res.status}${body ? `: ${body}` : ''}`);
   }
-  const arrayBuffer = await res.arrayBuffer();
-  return Buffer.from(arrayBuffer);
+  throw new Error(`Falha ao baixar planilha — ${errors.join(' | ')}`);
 }
 
-module.exports = { encodeShareUrl, fetchWorkbook };
+module.exports = { toDirectDownloadUrl, encodeShareUrl, fetchWorkbook };

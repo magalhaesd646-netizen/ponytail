@@ -1,4 +1,4 @@
-name: dovale-pos-obra
+name: pos-obra
 
 on:
   schedule:
@@ -8,7 +8,7 @@ on:
 
 defaults:
   run:
-    working-directory: dovale-pos-obra
+    working-directory: pos-obra
 
 jobs:
   # Busca as planilhas e regenera web/data/*.json. Não depende do GitHub
@@ -64,14 +64,14 @@ jobs:
           cp -r ../vale-paraiba-lancamentos/web/. site/
           mkdir -p site/investimentos
           cp -r ../investimentos/. site/investimentos/
-          mkdir -p site/dovale-pos-obra
-          cp -r web/. site/dovale-pos-obra/
+          mkdir -p site/pos-obra
+          cp -r web/. site/pos-obra/
 
       - name: Publicar site como artefato (para o job de deploy)
         uses: actions/upload-artifact@v4
         with:
           name: pages-web
-          path: dovale-pos-obra/site
+          path: pos-obra/site
           retention-days: 1
 
   # Job separado: só mexe com o GitHub Pages. Se o Pages ainda não estiver

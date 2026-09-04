@@ -15,7 +15,9 @@ async function fetchWorkbook(shareUrl) {
   const apiUrl = `https://api.onedrive.com/v1.0/shares/${token}/root/content`;
   const res = await fetch(apiUrl, { redirect: 'follow' });
   if (!res.ok) {
-    throw new Error(`Falha ao baixar planilha (HTTP ${res.status})`);
+    const location = res.headers.get('location');
+    const detail = location ? ` — redirecionou para: ${location}` : '';
+    throw new Error(`Falha ao baixar planilha (HTTP ${res.status})${detail}`);
   }
   const arrayBuffer = await res.arrayBuffer();
   return Buffer.from(arrayBuffer);

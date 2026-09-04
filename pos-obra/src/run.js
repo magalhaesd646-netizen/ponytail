@@ -63,15 +63,12 @@ async function runTab(tab) {
 
   try {
     const { columns, rows, sheetName: usedSheet, sheetNames } = await parseWorkbook(found.buffer, sheetName);
-    fs.writeFileSync(
-      outPath,
-      JSON.stringify(
-        { configured: true, updatedAt: new Date().toISOString(), sheetName: usedSheet, sheetNames, columns, rows },
-        null,
-        2
-      ) + '\n',
-      'utf8'
-    );
+    const base = { configured: true, updatedAt: new Date().toISOString(), sheetName: usedSheet, sheetNames };
+    // Um resumo agregado (ver src/config.js) substitui a tabela crua — mais
+    // relevante pra ler e muito mais leve pra comitar todo dia do que
+    // milhares de linhas de texto livre.
+    const payload = tab.summarize ? { ...base, summary: tab.summarize(rows) } : { ...base, columns, rows };
+    fs.writeFileSync(outPath, JSON.stringify(payload, null, 2) + '\n', 'utf8');
     console.log(`[${tab.id}] ${rows.length} linha(s) atualizada(s) via ${found.source} (aba "${usedSheet}").`);
   } catch (err) {
     writeErrorUnlessAlreadyGood(outPath, new Error(`[${tab.id}] falha ao atualizar: ${err.message}`));

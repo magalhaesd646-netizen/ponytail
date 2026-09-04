@@ -116,6 +116,58 @@
     border-radius: 10px;
     background: var(--card);
   }
+  .summary-wrap { display: none; }
+  .summary-wrap.visible { display: block; }
+  .summary-total {
+    font-size: 1.6rem;
+    font-weight: 600;
+    margin: 0 0 4px;
+  }
+  .summary-total-label { color: var(--muted); font-size: 0.85rem; margin: 0 0 20px; }
+  .summary-section {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 18px;
+    margin-bottom: 16px;
+  }
+  .summary-section h2 {
+    margin: 0 0 14px;
+    font-size: 1rem;
+    color: var(--text);
+  }
+  .bar-row {
+    display: grid;
+    grid-template-columns: minmax(120px, 200px) 1fr 56px;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 6px;
+  }
+  .bar-row .bar-label {
+    font-size: 0.85rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .bar-row .bar-track {
+    display: block;
+    height: 18px;
+    background: var(--accent-bg);
+    border-radius: 4px;
+  }
+  .bar-row .bar-fill {
+    display: block;
+    height: 100%;
+    background: var(--accent);
+    border-radius: 4px;
+    min-width: 2px;
+  }
+  .bar-row .bar-value {
+    font-size: 0.85rem;
+    color: var(--text);
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
 </style>
 </head>
 <body>
@@ -143,10 +195,53 @@ function formatDate(iso) {
   return d.toLocaleString('pt-BR');
 }
 
+function renderBarList(container, items, { labelKey, valueKey, valueLabel }) {
+  const max = Math.max(1, ...items.map((item) => item[valueKey]));
+  container.innerHTML = items
+    .map(
+      (item) => `
+        <div class="bar-row">
+          <span class="bar-label" title="${escapeHtml(item[labelKey])}">${escapeHtml(item[labelKey])}</span>
+          <span class="bar-track"><span class="bar-fill" style="width:${(item[valueKey] / max) * 100}%"></span></span>
+          <span class="bar-value">${escapeHtml(valueLabel(item))}</span>
+        </div>`
+    )
+    .join('');
+}
+
+function renderSummary(panel, data, search) {
+  const summary = data.summary;
+  const porEmpreendimento = search
+    ? summary.porEmpreendimento.filter((item) => item.empreendimento.toLowerCase().includes(search))
+    : summary.porEmpreendimento;
+
+  panel.querySelector('.summary-total').textContent = summary.totalChamados.toLocaleString('pt-BR');
+  renderBarList(panel.querySelector('.by-empreendimento'), porEmpreendimento, {
+    labelKey: 'empreendimento',
+    valueKey: 'total',
+    valueLabel: (item) => item.total.toLocaleString('pt-BR'),
+  });
+  renderBarList(panel.querySelector('.by-familia'), summary.porFamilia, {
+    labelKey: 'familia',
+    valueKey: 'percentual',
+    valueLabel: (item) => `${item.percentual}%`,
+  });
+}
+
 function renderTable(panel, data) {
   const tableWrap = panel.querySelector('.table-wrap');
+  const summaryWrap = panel.querySelector('.summary-wrap');
   const emptyState = panel.querySelector('.empty-state');
   const search = (panel.querySelector('input[type="search"]').value || '').trim().toLowerCase();
+
+  if (data.summary) {
+    tableWrap.hidden = true;
+    summaryWrap.classList.add('visible');
+    emptyState.hidden = true;
+    renderSummary(panel, data, search);
+    return;
+  }
+  summaryWrap.classList.remove('visible');
 
   const rows = search
     ? data.rows.filter((row) => Object.values(row).some((v) => String(v).toLowerCase().includes(search)))
@@ -213,6 +308,18 @@ function buildPanel(tab) {
       <a class="external-link" target="_blank" rel="noopener" hidden>Abrir link externo ↗</a>
     </div>
     <div class="table-wrap"><table></table></div>
+    <div class="summary-wrap">
+      <p class="summary-total">0</p>
+      <p class="summary-total-label">chamados no total</p>
+      <div class="summary-section">
+        <h2>Chamados por empreendimento</h2>
+        <div class="by-empreendimento"></div>
+      </div>
+      <div class="summary-section">
+        <h2>Família dos chamados</h2>
+        <div class="by-familia"></div>
+      </div>
+    </div>
     <div class="empty-state" hidden></div>
   `;
   panel.querySelector('input[type="search"]').addEventListener('input', () => {

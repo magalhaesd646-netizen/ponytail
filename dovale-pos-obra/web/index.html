@@ -1,0 +1,253 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Dovale Pós-Obra</title>
+<style>
+  :root {
+    color-scheme: light dark;
+    --bg: #f6f5f2;
+    --card: #ffffff;
+    --text: #1c1a17;
+    --muted: #6b6560;
+    --border: #e4e0d8;
+    --accent: #2e7d6b;
+    --accent-bg: #e1f0eb;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #17140f;
+      --card: #221e18;
+      --text: #f1ede6;
+      --muted: #a89e8f;
+      --border: #3a342a;
+      --accent: #5bc2a8;
+      --accent-bg: #1c332c;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  }
+  header { padding: 28px 20px 0; max-width: 1100px; margin: 0 auto; }
+  h1 { margin: 0 0 4px; font-size: 1.5rem; }
+  header p { margin: 0 0 20px; color: var(--muted); }
+  nav.tabs {
+    display: flex;
+    gap: 8px;
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 0 20px;
+    border-bottom: 1px solid var(--border);
+    overflow-x: auto;
+  }
+  nav.tabs button {
+    background: none;
+    border: none;
+    padding: 12px 16px;
+    font-size: 0.95rem;
+    color: var(--muted);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    white-space: nowrap;
+  }
+  nav.tabs button.active {
+    color: var(--accent);
+    border-bottom-color: var(--accent);
+    font-weight: 600;
+  }
+  main { max-width: 1100px; margin: 0 auto; padding: 20px; }
+  .panel { display: none; }
+  .panel.active { display: block; }
+  .panel-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+  .panel-toolbar input[type="search"] {
+    flex: 1;
+    min-width: 200px;
+    padding: 8px 12px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--card);
+    color: var(--text);
+    font-size: 0.9rem;
+  }
+  .updated-at { color: var(--muted); font-size: 0.85rem; }
+  a.external-link {
+    color: var(--accent);
+    text-decoration: none;
+    font-size: 0.9rem;
+    white-space: nowrap;
+  }
+  a.external-link:hover { text-decoration: underline; }
+  .table-wrap {
+    overflow-x: auto;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    background: var(--card);
+  }
+  table { border-collapse: collapse; width: 100%; font-size: 0.9rem; }
+  th, td {
+    text-align: left;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+  thead th {
+    background: var(--accent-bg);
+    color: var(--accent);
+    position: sticky;
+    top: 0;
+  }
+  tbody tr:last-child td { border-bottom: none; }
+  .empty-state {
+    padding: 40px 20px;
+    text-align: center;
+    color: var(--muted);
+    border: 1px dashed var(--border);
+    border-radius: 10px;
+    background: var(--card);
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>Dovale Pós-Obra</h1>
+  <p>Painel de acompanhamento pós-obra, atualizado automaticamente todo dia a partir das planilhas.</p>
+</header>
+<nav class="tabs" id="tabs"></nav>
+<main id="panels"></main>
+
+<script>
+const TABS = [
+  { id: 'pos-obra', label: 'Pós-Obra' },
+  { id: 'vistorias', label: 'Vistorias de Qualidade e Pós-Obra' },
+  { id: 'agenda', label: 'Agenda Pós-Obra' },
+];
+
+const tabsEl = document.getElementById('tabs');
+const panelsEl = document.getElementById('panels');
+const state = {};
+
+function formatDate(iso) {
+  if (!iso) return 'nunca';
+  const d = new Date(iso);
+  return d.toLocaleString('pt-BR');
+}
+
+function renderTable(panel, data) {
+  const tableWrap = panel.querySelector('.table-wrap');
+  const emptyState = panel.querySelector('.empty-state');
+  const search = (panel.querySelector('input[type="search"]').value || '').trim().toLowerCase();
+
+  const rows = search
+    ? data.rows.filter((row) => Object.values(row).some((v) => String(v).toLowerCase().includes(search)))
+    : data.rows;
+
+  if (!data.columns.length || !rows.length) {
+    tableWrap.hidden = true;
+    emptyState.hidden = false;
+    emptyState.textContent = !data.configured
+      ? 'Planilha ainda não configurada para esta aba (ver .env.example / segredos do GitHub Actions).'
+      : !data.columns.length
+      ? 'Sem dados retornados pela planilha ainda.'
+      : 'Nenhuma linha corresponde à busca.';
+    return;
+  }
+
+  tableWrap.hidden = false;
+  emptyState.hidden = true;
+  const thead = `<thead><tr>${data.columns.map((c) => `<th>${escapeHtml(c)}</th>`).join('')}</tr></thead>`;
+  const tbody = `<tbody>${rows
+    .map((row) => `<tr>${data.columns.map((c) => `<td>${escapeHtml(row[c])}</td>`).join('')}</tr>`)
+    .join('')}</tbody>`;
+  tableWrap.querySelector('table').innerHTML = thead + tbody;
+}
+
+function escapeHtml(value) {
+  return String(value ?? '').replace(/[&<>"']/g, (ch) => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+  }[ch]));
+}
+
+async function loadTab(tab, links) {
+  const panel = document.getElementById(`panel-${tab.id}`);
+  let data = { configured: false, updatedAt: null, columns: [], rows: [] };
+  try {
+    const res = await fetch(`./data/${tab.id}.json?_=${Date.now()}`);
+    if (res.ok) data = await res.json();
+  } catch (err) {
+    console.error(`Falha ao carregar dados de ${tab.id}`, err);
+  }
+  state[tab.id] = data;
+  panel.querySelector('.updated-at').textContent = `Atualizado em: ${formatDate(data.updatedAt)}`;
+
+  const link = links && links[tab.id];
+  const linkEl = panel.querySelector('.external-link');
+  if (link) {
+    linkEl.href = link;
+    linkEl.hidden = false;
+  } else {
+    linkEl.hidden = true;
+  }
+
+  renderTable(panel, data);
+}
+
+function buildPanel(tab) {
+  const panel = document.createElement('section');
+  panel.className = 'panel';
+  panel.id = `panel-${tab.id}`;
+  panel.innerHTML = `
+    <div class="panel-toolbar">
+      <input type="search" placeholder="Buscar em ${escapeHtml(tab.label)}..." />
+      <span class="updated-at">Atualizado em: —</span>
+      <a class="external-link" target="_blank" rel="noopener" hidden>Abrir link externo ↗</a>
+    </div>
+    <div class="table-wrap"><table></table></div>
+    <div class="empty-state" hidden></div>
+  `;
+  panel.querySelector('input[type="search"]').addEventListener('input', () => {
+    renderTable(panel, state[tab.id] || { columns: [], rows: [] });
+  });
+  return panel;
+}
+
+function activateTab(id) {
+  for (const btn of tabsEl.children) btn.classList.toggle('active', btn.dataset.id === id);
+  for (const panel of panelsEl.children) panel.classList.toggle('active', panel.id === `panel-${id}`);
+}
+
+async function init() {
+  let links = {};
+  try {
+    const res = await fetch(`./links.json?_=${Date.now()}`);
+    if (res.ok) links = await res.json();
+  } catch (err) {
+    console.error('Falha ao carregar links.json', err);
+  }
+
+  for (const tab of TABS) {
+    const btn = document.createElement('button');
+    btn.textContent = tab.label;
+    btn.dataset.id = tab.id;
+    btn.addEventListener('click', () => activateTab(tab.id));
+    tabsEl.appendChild(btn);
+    panelsEl.appendChild(buildPanel(tab));
+    loadTab(tab, links);
+  }
+  activateTab(TABS[0].id);
+}
+
+init();
+</script>
+</body>
+</html>

@@ -44,6 +44,33 @@ function countBy(rows, getKey) {
   return [...counts.entries()].sort((a, b) => b[1] - a[1]);
 }
 
+const MESES = ['jan', 'fev', 'mar', 'abr', 'mai', 'jun', 'jul', 'ago', 'set', 'out', 'nov', 'dez'];
+
+// A coluna "Data" vem no formato dd/mm/aaaa (data de abertura do chamado).
+function parseDataBR(value) {
+  const match = String(value ?? '').trim().match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})/);
+  if (!match) return null;
+  return { year: Number(match[3]), month: Number(match[2]) - 1 };
+}
+
+// Chamados por mês de abertura, em ordem cronológica (não por volume) — é
+// uma série temporal, faz sentido lida da esquerda pra direita.
+function porMesDe(rows) {
+  const counts = new Map();
+  for (const row of rows) {
+    const parsed = parseDataBR(row.Data);
+    if (!parsed) continue;
+    const key = `${parsed.year}-${String(parsed.month).padStart(2, '0')}`;
+    counts.set(key, (counts.get(key) || 0) + 1);
+  }
+  return [...counts.entries()]
+    .sort((a, b) => a[0].localeCompare(b[0]))
+    .map(([key, total]) => {
+      const [year, month] = key.split('-').map(Number);
+      return { mes: `${MESES[month]}/${String(year).slice(2)}`, total };
+    });
+}
+
 // Resumo do arquivo de chamados de pós-obra: quantidade por empreendimento e
 // a distribuição por família (hidráulica, elétrica, etc.) do total de
 // chamados. Pensado especificamente pro formato desse arquivo (colunas
@@ -63,7 +90,7 @@ function summarizePosObra(rows) {
     percentual: total ? Math.round((count / total) * 1000) / 10 : 0,
   }));
 
-  return { totalChamados: total, porEmpreendimento, porFamilia };
+  return { totalChamados: total, porEmpreendimento, porFamilia, porMes: porMesDe(rows) };
 }
 
 module.exports = { summarizePosObra };

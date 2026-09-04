@@ -1,6 +1,6 @@
 {
   "configured": true,
-  "updatedAt": "2026-09-04T19:00:43.759Z",
+  "updatedAt": "2026-09-04T19:11:31.268Z",
   "sheetName": "sheet1",
   "sheetNames": [
     "sheet1"
@@ -167,6 +167,156 @@
         "familia": "Marcenaria",
         "total": 8,
         "percentual": 0.1
+      }
+    ],
+    "porMes": [
+      {
+        "mes": "jul/23",
+        "total": 1
+      },
+      {
+        "mes": "set/23",
+        "total": 213
+      },
+      {
+        "mes": "out/23",
+        "total": 180
+      },
+      {
+        "mes": "nov/23",
+        "total": 62
+      },
+      {
+        "mes": "dez/23",
+        "total": 50
+      },
+      {
+        "mes": "jan/24",
+        "total": 96
+      },
+      {
+        "mes": "fev/24",
+        "total": 44
+      },
+      {
+        "mes": "mar/24",
+        "total": 48
+      },
+      {
+        "mes": "abr/24",
+        "total": 76
+      },
+      {
+        "mes": "mai/24",
+        "total": 70
+      },
+      {
+        "mes": "jun/24",
+        "total": 109
+      },
+      {
+        "mes": "jul/24",
+        "total": 177
+      },
+      {
+        "mes": "ago/24",
+        "total": 442
+      },
+      {
+        "mes": "set/24",
+        "total": 378
+      },
+      {
+        "mes": "out/24",
+        "total": 400
+      },
+      {
+        "mes": "nov/24",
+        "total": 354
+      },
+      {
+        "mes": "dez/24",
+        "total": 390
+      },
+      {
+        "mes": "jan/25",
+        "total": 683
+      },
+      {
+        "mes": "fev/25",
+        "total": 884
+      },
+      {
+        "mes": "mar/25",
+        "total": 298
+      },
+      {
+        "mes": "abr/25",
+        "total": 296
+      },
+      {
+        "mes": "mai/25",
+        "total": 219
+      },
+      {
+        "mes": "jun/25",
+        "total": 226
+      },
+      {
+        "mes": "jul/25",
+        "total": 400
+      },
+      {
+        "mes": "ago/25",
+        "total": 374
+      },
+      {
+        "mes": "set/25",
+        "total": 382
+      },
+      {
+        "mes": "out/25",
+        "total": 488
+      },
+      {
+        "mes": "nov/25",
+        "total": 476
+      },
+      {
+        "mes": "dez/25",
+        "total": 330
+      },
+      {
+        "mes": "jan/26",
+        "total": 341
+      },
+      {
+        "mes": "fev/26",
+        "total": 288
+      },
+      {
+        "mes": "mar/26",
+        "total": 496
+      },
+      {
+        "mes": "abr/26",
+        "total": 346
+      },
+      {
+        "mes": "mai/26",
+        "total": 266
+      },
+      {
+        "mes": "jun/26",
+        "total": 452
+      },
+      {
+        "mes": "jul/26",
+        "total": 433
+      },
+      {
+        "mes": "ago/26",
+        "total": 283
       }
     ]
   }

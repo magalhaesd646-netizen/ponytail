@@ -1,0 +1,105 @@
+name: dovale-pos-obra
+
+on:
+  schedule:
+    # 10:00 UTC ~= 07:00 horário de Brasília (UTC-3, sem horário de verão).
+    - cron: '0 10 * * *'
+  workflow_dispatch: {}
+
+defaults:
+  run:
+    working-directory: dovale-pos-obra
+
+jobs:
+  # Busca as planilhas e regenera web/data/*.json. Não depende do GitHub
+  # Pages estar habilitado — roda e funciona mesmo que o deploy (job
+  # seguinte) ainda não esteja configurado.
+  run:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # comitar web/data/*.json (histórico dos dados puxados)
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Instalar dependências
+        run: npm install
+
+      - name: Buscar dados das planilhas (OneDrive/SharePoint)
+        env:
+          POS_OBRA_SHEET_URL: ${{ secrets.POS_OBRA_SHEET_URL }}
+          VISTORIAS_SHEET_URL: ${{ secrets.VISTORIAS_SHEET_URL }}
+          AGENDA_SHEET_URL: ${{ secrets.AGENDA_SHEET_URL }}
+          POS_OBRA_SHEET_NAME: ${{ vars.POS_OBRA_SHEET_NAME }}
+          VISTORIAS_SHEET_NAME: ${{ vars.VISTORIAS_SHEET_NAME }}
+          AGENDA_SHEET_NAME: ${{ vars.AGENDA_SHEET_NAME }}
+        run: npm start
+
+      - name: Salvar dados atualizados
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add web/data
+          if git diff --cached --quiet; then
+            echo "Nenhuma mudança nos dados."
+          else
+            git commit -m "chore: atualiza dados das planilhas de pós-obra"
+            git push
+          fi
+
+      # O GitHub Pages deste repositório é compartilhado com o
+      # vale-paraiba-lancamentos (que também embute o investimentos) — só
+      # existe um site por repositório. Para o painel de pós-obra ficar
+      # sempre disponível independente de qual workflow publicou por
+      # último, montamos aqui a MESMA estrutura completa: o painel do
+      # vale-paraiba-lancamentos na raiz, investimentos e este painel como
+      # subpastas.
+      - name: Montar site completo do GitHub Pages
+        run: |
+          rm -rf site
+          mkdir -p site
+          cp -r ../vale-paraiba-lancamentos/web/. site/
+          mkdir -p site/investimentos
+          cp -r ../investimentos/. site/investimentos/
+          mkdir -p site/dovale-pos-obra
+          cp -r web/. site/dovale-pos-obra/
+
+      - name: Publicar site como artefato (para o job de deploy)
+        uses: actions/upload-artifact@v4
+        with:
+          name: pages-web
+          path: dovale-pos-obra/site
+          retention-days: 1
+
+  # Job separado: só mexe com o GitHub Pages. Se o Pages ainda não estiver
+  # habilitado em Settings → Pages → Source → "GitHub Actions", só ESTE job
+  # falha — a busca de dados do job "run" acima já rodou normalmente.
+  deploy-pages:
+    needs: run
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Baixar site gerado
+        uses: actions/download-artifact@v4
+        with:
+          name: pages-web
+          path: site
+
+      - uses: actions/configure-pages@v5
+
+      - name: Empacotar site
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+      - name: Publicar no GitHub Pages
+        id: deployment
+        uses: actions/deploy-pages@v4

@@ -3,7 +3,7 @@
 const fs = require('fs');
 const path = require('path');
 const { TABS } = require('./config');
-const { fetchWorkbook } = require('./lib/oneDrive');
+const { fetchWorkbook } = require('./lib/fetchSheet');
 const { parseWorkbook } = require('./lib/parseWorkbook');
 
 const DATA_DIR = path.join(__dirname, '..', 'web', 'data');

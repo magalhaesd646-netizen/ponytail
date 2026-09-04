@@ -154,6 +154,7 @@
 
   /* ---- Raw table (Vistorias / Agenda, sem resumo ainda) ---- */
   .panel-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-bottom: 14px; }
+  .panel-toolbar[hidden] { display: none; }
   .panel-toolbar input[type="search"] {
     flex: 1; min-width: 200px; padding: 8px 12px; border: 1px solid var(--border);
     border-radius: 8px; background: var(--card); color: var(--text); font-size: 0.9rem;
@@ -205,12 +206,6 @@
 </div>
 
 <script>
-const TABS = [
-  { id: 'pos-obra', label: 'Pós-Obra', icon: '🛠️', subtitle: 'Acompanhe os chamados de assistência técnica por empreendimento e família.' },
-  { id: 'vistorias', label: 'Vistorias de Qualidade e Pós-Obra', icon: '📋', subtitle: 'Dados da planilha de vistorias.' },
-  { id: 'agenda', label: 'Agenda Pós-Obra', icon: '🗓️', subtitle: 'Dados da planilha de agenda.' },
-];
-
 const FAMILIA_COLORS = {
   'Hidráulica': '#d9482f',
   'Elétrica': '#e8a33d',
@@ -219,7 +214,76 @@ const FAMILIA_COLORS = {
   'Marcenaria': '#c9beb8',
   'Outros': '#9c8b83',
 };
+const MODELO_COLORS = {
+  'QUALIDADE - VISTORIA UNIDADE': '#d9482f',
+  'QUALIDADE - VISTORIA RECEBIMENTO': '#e8a33d',
+  'PÓS OBRA - VISTORIA RECEBIMENTO': '#7a1f1f',
+};
 const FALLBACK_COLOR = '#9c8b83';
+
+const TABS = [
+  {
+    id: 'pos-obra',
+    label: 'Pós-Obra',
+    icon: '🛠️',
+    subtitle: 'Acompanhe os chamados de assistência técnica por empreendimento e família.',
+    summaryLayout: {
+      totalKey: 'totalChamados',
+      totalLabel: 'chamados no total',
+      donut: {
+        key: 'porFamilia',
+        labelKey: 'familia',
+        colors: FAMILIA_COLORS,
+        title: 'Família dos chamados',
+        subtitle: 'Distribuição por tipo de problema',
+      },
+      columns: {
+        key: 'porEmpreendimento',
+        labelKey: 'empreendimento',
+        title: 'Chamados por empreendimento',
+        subtitle: 'Quantidade de chamados abertos, por empreendimento',
+        searchPlaceholder: 'Buscar empreendimento...',
+      },
+      monthly: {
+        key: 'porMes',
+        labelKey: 'mes',
+        title: 'Chamados por mês',
+        subtitle: 'Últimos 12 meses, pela data de abertura',
+      },
+    },
+  },
+  {
+    id: 'vistorias',
+    label: 'Vistorias de Qualidade e Pós-Obra',
+    icon: '📋',
+    subtitle: 'Não conformidades identificadas nas vistorias, por obra e por tipo.',
+    summaryLayout: {
+      totalKey: 'totalNC',
+      totalLabel: 'não conformidades no total',
+      donut: {
+        key: 'porModelo',
+        labelKey: 'modelo',
+        colors: MODELO_COLORS,
+        title: 'Não conformidades por tipo de vistoria',
+        subtitle: 'Distribuição geral',
+      },
+      columns: {
+        key: 'porObra',
+        labelKey: 'obra',
+        title: 'Não conformidades por obra',
+        subtitle: 'Quantidade de NC, por obra',
+        searchPlaceholder: 'Buscar obra...',
+      },
+      monthly: {
+        key: 'porMes',
+        labelKey: 'mes',
+        title: 'Não conformidades por mês',
+        subtitle: 'Últimos 12 meses, pela data da vistoria',
+      },
+    },
+  },
+  { id: 'agenda', label: 'Agenda Pós-Obra', icon: '🗓️', subtitle: 'Dados da planilha de agenda.' },
+];
 
 const tabsEl = document.getElementById('tabs');
 const panelsEl = document.getElementById('panels');
@@ -242,21 +306,21 @@ function escapeHtml(value) {
   }[ch]));
 }
 
-function renderDonut(panel, porFamilia) {
+function renderDonut(panel, items, { labelKey, colors }) {
   let acc = 0;
-  const stops = porFamilia.map((item) => {
-    const color = FAMILIA_COLORS[item.familia] || FALLBACK_COLOR;
+  const stops = items.map((item) => {
+    const color = colors[item[labelKey]] || FALLBACK_COLOR;
     const start = acc;
     acc += item.percentual;
     return `${color} ${start}% ${acc}%`;
   });
   panel.querySelector('.donut').style.background = `conic-gradient(${stops.join(', ')})`;
-  panel.querySelector('.donut-legend').innerHTML = porFamilia
+  panel.querySelector('.donut-legend').innerHTML = items
     .map(
       (item) => `
         <div class="legend-row">
-          <span class="legend-swatch" style="background:${FAMILIA_COLORS[item.familia] || FALLBACK_COLOR}"></span>
-          <span class="legend-name">${escapeHtml(item.familia)}</span>
+          <span class="legend-swatch" style="background:${colors[item[labelKey]] || FALLBACK_COLOR}"></span>
+          <span class="legend-name">${escapeHtml(item[labelKey])}</span>
           <span class="legend-value">${item.percentual}% (${item.total.toLocaleString('pt-BR')})</span>
         </div>`
     )
@@ -277,48 +341,58 @@ function renderColumnChart(container, items, { labelKey, valueKey }) {
     .join('');
 }
 
-function renderSummary(panel, data, search) {
+function renderSummary(panel, data, layout, search) {
   const summary = data.summary;
-  const porEmpreendimento = search
-    ? summary.porEmpreendimento.filter((item) => item.empreendimento.toLowerCase().includes(search))
-    : summary.porEmpreendimento;
+  const columnItems = search
+    ? summary[layout.columns.key].filter((item) => item[layout.columns.labelKey].toLowerCase().includes(search))
+    : summary[layout.columns.key];
 
-  panel.querySelector('.donut-total .stat-value').textContent = summary.totalChamados.toLocaleString('pt-BR');
-  renderDonut(panel, summary.porFamilia);
-  renderColumnChart(panel.querySelector('.by-empreendimento'), porEmpreendimento, {
-    labelKey: 'empreendimento',
-    valueKey: 'total',
-  });
-  renderColumnChart(panel.querySelector('.by-mes'), summary.porMes.slice(-12), {
-    labelKey: 'mes',
+  panel.querySelector('.donut-total .stat-value').textContent = summary[layout.totalKey].toLocaleString('pt-BR');
+  renderDonut(panel, summary[layout.donut.key], layout.donut);
+  renderColumnChart(panel.querySelector('.by-columns'), columnItems, {
+    labelKey: layout.columns.labelKey,
     valueKey: 'total',
   });
 
-  if (summary.porMes.length) {
-    periodoBox.hidden = false;
-    periodoValue.textContent = `${summary.porMes[0].mes} – ${summary.porMes[summary.porMes.length - 1].mes}`;
-  } else {
-    periodoBox.hidden = true;
+  const porMes = layout.monthly && summary[layout.monthly.key];
+  if (porMes) {
+    renderColumnChart(panel.querySelector('.by-mes'), porMes.slice(-12), {
+      labelKey: layout.monthly.labelKey,
+      valueKey: 'total',
+    });
   }
+
+  // Guardado no painel (não escrito direto no header compartilhado) — só
+  // vira visível quando esta aba estiver ativa, via syncHeader. Escrever
+  // direto aqui vazaria o período de uma aba pra outra: toda aba recarrega
+  // os dados em paralelo no init, então a última a responder "vencia" no
+  // header inteiro, mesmo se não fosse a aba aberta na tela.
+  panel.dataset.periodo =
+    porMes && porMes.length ? `${porMes[0][layout.monthly.labelKey]} – ${porMes[porMes.length - 1][layout.monthly.labelKey]}` : '';
 }
 
 function renderTable(panel, data) {
   const tableWrap = panel.querySelector('.table-wrap');
   const summaryWrap = panel.querySelector('.summary-wrap');
+  const panelToolbar = panel.querySelector('.panel-toolbar');
   const emptyState = panel.querySelector('.empty-state');
-  const searchInput = panel.querySelector('input[type="search"]');
-  const search = (searchInput && searchInput.value || '').trim().toLowerCase();
 
-  if (data.summary) {
+  if (data.summary && panel.summaryLayout) {
+    const columnsSearchInput = panel.querySelector('.col-chart-toolbar input[type="search"]');
+    const search = (columnsSearchInput && columnsSearchInput.value || '').trim().toLowerCase();
     tableWrap.hidden = true;
+    panelToolbar.hidden = true;
     summaryWrap.classList.add('visible');
     emptyState.hidden = true;
-    renderSummary(panel, data, search);
+    renderSummary(panel, data, panel.summaryLayout, search);
     return;
   }
   summaryWrap.classList.remove('visible');
-  periodoBox.hidden = true;
+  panelToolbar.hidden = false;
+  panel.dataset.periodo = '';
 
+  const tableSearchInput = panel.querySelector('.panel-toolbar input[type="search"]');
+  const search = (tableSearchInput && tableSearchInput.value || '').trim().toLowerCase();
   const rows = search
     ? data.rows.filter((row) => Object.values(row).some((v) => String(v).toLowerCase().includes(search)))
     : data.rows;
@@ -358,8 +432,8 @@ async function loadTab(tab, links) {
   const link = links && links[tab.id];
   panel.dataset.externalLink = link || '';
 
-  if (panel.classList.contains('active')) syncHeader(tab, panel);
   renderTable(panel, data);
+  if (panel.classList.contains('active')) syncHeader(tab, panel);
 }
 
 function syncHeader(tab, panel) {
@@ -373,49 +447,70 @@ function syncHeader(tab, panel) {
   } else {
     externalLinkEl.hidden = true;
   }
-  periodoBox.hidden = true;
+  const periodo = panel.dataset.periodo;
+  if (periodo) {
+    periodoBox.hidden = false;
+    periodoValue.textContent = periodo;
+  } else {
+    periodoBox.hidden = true;
+  }
 }
 
-function buildPanel(tab) {
-  const panel = document.createElement('section');
-  panel.className = 'panel';
-  panel.id = `panel-${tab.id}`;
-  panel.innerHTML = `
+function buildSummaryMarkup(layout) {
+  if (!layout) return '';
+  return `
     <div class="summary-wrap">
       <div class="grid grid-2">
         <div class="card">
-          <h2>Família dos chamados</h2>
-          <p class="card-sub">Distribuição por tipo de problema</p>
+          <h2>${escapeHtml(layout.donut.title)}</h2>
+          <p class="card-sub">${escapeHtml(layout.donut.subtitle)}</p>
           <div class="donut-wrap">
             <div class="donut"></div>
             <div class="donut-legend"></div>
           </div>
           <div class="donut-total">
             <div class="stat-value">0</div>
-            <div class="stat-label">chamados no total</div>
+            <div class="stat-label">${escapeHtml(layout.totalLabel)}</div>
           </div>
         </div>
         <div class="card">
-          <h2>Chamados por empreendimento</h2>
-          <p class="card-sub">Quantidade de chamados abertos, por empreendimento</p>
+          <h2>${escapeHtml(layout.columns.title)}</h2>
+          <p class="card-sub">${escapeHtml(layout.columns.subtitle)}</p>
           <div class="col-chart-toolbar">
-            <input type="search" placeholder="Buscar empreendimento..." />
+            <input type="search" placeholder="${escapeHtml(layout.columns.searchPlaceholder || 'Buscar...')}" />
           </div>
-          <div class="col-chart by-empreendimento"></div>
+          <div class="col-chart by-columns"></div>
         </div>
       </div>
-      <div class="card">
-        <h2>Chamados por mês</h2>
-        <p class="card-sub">Últimos 12 meses, pela data de abertura</p>
+      ${
+        layout.monthly
+          ? `<div class="card">
+        <h2>${escapeHtml(layout.monthly.title)}</h2>
+        <p class="card-sub">${escapeHtml(layout.monthly.subtitle)}</p>
         <div class="col-chart by-mes"></div>
-      </div>
+      </div>`
+          : ''
+      }
     </div>
+  `;
+}
+
+function buildPanel(tab) {
+  const panel = document.createElement('section');
+  panel.className = 'panel';
+  panel.id = `panel-${tab.id}`;
+  panel.summaryLayout = tab.summaryLayout || null;
+  panel.innerHTML = `
+    ${buildSummaryMarkup(tab.summaryLayout)}
     <div class="panel-toolbar">
       <input type="search" placeholder="Buscar em ${escapeHtml(tab.label)}..." />
     </div>
     <div class="table-wrap"><table></table></div>
     <div class="empty-state" hidden></div>
   `;
+  if (!panel.querySelector('.summary-wrap')) {
+    panel.insertAdjacentHTML('afterbegin', '<div class="summary-wrap"></div>');
+  }
   for (const input of panel.querySelectorAll('input[type="search"]')) {
     input.addEventListener('input', () => renderTable(panel, state[tab.id] || { columns: [], rows: [] }));
   }

@@ -2,7 +2,7 @@
 
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { summarizePosObra } = require('../src/lib/summarize');
+const { summarizePosObra, summarizeVistorias } = require('../src/lib/summarize');
 
 test('summarizePosObra counts rows per Empreendimento, sorted descending', () => {
   const rows = [
@@ -56,4 +56,25 @@ test('summarizePosObra groups chamados per month in chronological order', () => 
     { mes: 'dez/25', total: 1 },
     { mes: 'jan/26', total: 2 },
   ]);
+});
+
+test('summarizeVistorias counts NC per obra and per modelo', () => {
+  const rows = [
+    { Obra: 'Mood Itaquera', Modelo: 'QUALIDADE - VISTORIA UNIDADE', Data: '10/01/2026' },
+    { Obra: 'Mood Itaquera', Modelo: 'QUALIDADE - VISTORIA UNIDADE', Data: '12/01/2026' },
+    { Obra: 'Gran Portinari', Modelo: 'PÓS OBRA - VISTORIA RECEBIMENTO', Data: '15/01/2026' },
+  ];
+
+  const summary = summarizeVistorias(rows);
+
+  assert.equal(summary.totalNC, 3);
+  assert.deepEqual(summary.porObra, [
+    { obra: 'Mood Itaquera', total: 2 },
+    { obra: 'Gran Portinari', total: 1 },
+  ]);
+  assert.deepEqual(summary.porModelo, [
+    { modelo: 'QUALIDADE - VISTORIA UNIDADE', total: 2, percentual: 66.7 },
+    { modelo: 'PÓS OBRA - VISTORIA RECEBIMENTO', total: 1, percentual: 33.3 },
+  ]);
+  assert.deepEqual(summary.porMes, [{ mes: 'jan/26', total: 3 }]);
 });

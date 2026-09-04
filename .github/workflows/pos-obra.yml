@@ -1,6 +1,10 @@
 name: pos-obra
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - 'pos-obra/uploads/**'
   schedule:
     # 10:00 UTC ~= 07:00 horário de Brasília (UTC-3, sem horário de verão).
     - cron: '0 10 * * *'
@@ -28,7 +32,7 @@ jobs:
       - name: Instalar dependências
         run: npm install
 
-      - name: Buscar dados das planilhas (OneDrive/SharePoint)
+      - name: Ler planilhas (uploads/ manual ou link do OneDrive/SharePoint)
         env:
           POS_OBRA_SHEET_URL: ${{ secrets.POS_OBRA_SHEET_URL }}
           VISTORIAS_SHEET_URL: ${{ secrets.VISTORIAS_SHEET_URL }}

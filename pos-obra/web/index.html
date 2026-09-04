@@ -7,23 +7,29 @@
 <style>
   :root {
     color-scheme: light dark;
-    --bg: #f6f5f2;
+    --bg: #faf3f2;
     --card: #ffffff;
-    --text: #1c1a17;
-    --muted: #6b6560;
-    --border: #e4e0d8;
-    --accent: #2e7d6b;
-    --accent-bg: #e1f0eb;
+    --text: #2a1717;
+    --muted: #8a7370;
+    --border: #f0dedb;
+    --accent: #d9482f;
+    --accent-bg: #fbe4df;
+    --brand-dark: #7a1f1f;
+    --brand-darker: #551313;
+    --shadow: 0 1px 3px rgba(122, 31, 31, 0.08);
   }
   @media (prefers-color-scheme: dark) {
     :root {
-      --bg: #17140f;
-      --card: #221e18;
-      --text: #f1ede6;
-      --muted: #a89e8f;
-      --border: #3a342a;
-      --accent: #5bc2a8;
-      --accent-bg: #1c332c;
+      --bg: #1c1210;
+      --card: #2a1c19;
+      --text: #f5e9e6;
+      --muted: #c2a49e;
+      --border: #43302b;
+      --accent: #ea6a4d;
+      --accent-bg: #3a2420;
+      --brand-dark: #ea6a4d;
+      --brand-darker: #2a1c19;
+      --shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
     }
   }
   * { box-sizing: border-box; }
@@ -33,177 +39,239 @@
     color: var(--text);
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
   }
-  header { padding: 28px 20px 0; max-width: 1100px; margin: 0 auto; }
-  h1 { margin: 0 0 4px; font-size: 1.5rem; }
-  header p { margin: 0 0 20px; color: var(--muted); }
-  nav.tabs {
-    display: flex;
-    gap: 8px;
-    max-width: 1100px;
-    margin: 0 auto;
-    padding: 0 20px;
-    border-bottom: 1px solid var(--border);
-    overflow-x: auto;
-  }
-  nav.tabs button {
-    background: none;
-    border: none;
-    padding: 12px 16px;
-    font-size: 0.95rem;
-    color: var(--muted);
-    cursor: pointer;
-    border-bottom: 2px solid transparent;
-    white-space: nowrap;
-  }
-  nav.tabs button.active {
-    color: var(--accent);
-    border-bottom-color: var(--accent);
-    font-weight: 600;
-  }
-  main { max-width: 1100px; margin: 0 auto; padding: 20px; }
-  .panel { display: none; }
-  .panel.active { display: block; }
-  .panel-toolbar {
-    display: flex;
-    flex-wrap: wrap;
-    align-items: center;
-    gap: 12px;
-    margin-bottom: 14px;
-  }
-  .panel-toolbar input[type="search"] {
-    flex: 1;
-    min-width: 200px;
-    padding: 8px 12px;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    background: var(--card);
-    color: var(--text);
-    font-size: 0.9rem;
-  }
-  .updated-at { color: var(--muted); font-size: 0.85rem; }
-  a.external-link {
-    color: var(--accent);
-    text-decoration: none;
-    font-size: 0.9rem;
-    white-space: nowrap;
-  }
-  a.external-link:hover { text-decoration: underline; }
-  .table-wrap {
-    overflow-x: auto;
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    background: var(--card);
-  }
-  table { border-collapse: collapse; width: 100%; font-size: 0.9rem; }
-  th, td {
-    text-align: left;
-    padding: 10px 14px;
-    border-bottom: 1px solid var(--border);
-    white-space: nowrap;
-  }
-  thead th {
-    background: var(--accent-bg);
-    color: var(--accent);
+  .app { display: flex; align-items: flex-start; min-height: 100vh; }
+
+  /* ---- Sidebar ---- */
+  .sidebar {
+    width: 220px;
+    flex-shrink: 0;
+    min-height: 100vh;
+    background: linear-gradient(180deg, var(--brand-dark), var(--brand-darker));
+    color: #fff;
+    padding: 26px 16px;
     position: sticky;
     top: 0;
   }
+  .brand { text-align: center; margin-bottom: 30px; }
+  .brand-mark {
+    width: 46px; height: 46px; border-radius: 50%;
+    background: rgba(255,255,255,.15);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 1rem; margin: 0 auto 10px;
+  }
+  .brand-name { font-weight: 700; font-size: 0.9rem; letter-spacing: .02em; }
+  .brand-sub { font-size: 0.65rem; opacity: .75; text-transform: uppercase; letter-spacing: .1em; margin-top: 2px; }
+  .side-nav { display: flex; flex-direction: column; gap: 4px; }
+  .side-nav button {
+    display: flex; align-items: center; gap: 10px;
+    background: none; border: none; color: rgba(255,255,255,.82);
+    padding: 10px 12px; border-radius: 8px;
+    font-size: 0.82rem; text-align: left; cursor: pointer;
+  }
+  .side-nav button .icon { font-size: 1rem; width: 18px; text-align: center; }
+  .side-nav button.active { background: rgba(255,255,255,.16); color: #fff; font-weight: 600; }
+  .side-nav button:hover:not(.active) { background: rgba(255,255,255,.08); }
+
+  /* ---- Content ---- */
+  .content { flex: 1; min-width: 0; padding: 26px 28px 50px; max-width: 1280px; }
+  .page-header {
+    display: flex; flex-wrap: wrap; justify-content: space-between; align-items: flex-start;
+    gap: 16px; margin-bottom: 22px;
+  }
+  .brand-kicker {
+    display: block;
+    font-size: 0.7rem; font-weight: 700; letter-spacing: 0.08em;
+    text-transform: uppercase; color: var(--accent); margin-bottom: 6px;
+  }
+  h1 { margin: 0 0 4px; font-size: 1.4rem; color: var(--brand-dark); }
+  .page-header p { margin: 0; color: var(--muted); font-size: 0.88rem; max-width: 50ch; }
+  .header-meta { display: flex; flex-wrap: wrap; gap: 10px; }
+  .meta-box {
+    background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+    padding: 8px 14px; box-shadow: var(--shadow); min-width: 130px;
+  }
+  .meta-label { display: block; font-size: 0.68rem; color: var(--muted); text-transform: uppercase; letter-spacing: .04em; }
+  .meta-value { display: block; font-size: 0.85rem; font-weight: 600; margin-top: 2px; }
+  a.external-link {
+    color: var(--accent); text-decoration: none; font-size: 0.85rem; font-weight: 600;
+    align-self: center; white-space: nowrap;
+  }
+  a.external-link:hover { text-decoration: underline; }
+
+  .panel { display: none; }
+  .panel.active { display: block; }
+
+  .card {
+    background: var(--card); border: 1px solid var(--border); border-radius: 14px;
+    padding: 18px 20px; box-shadow: var(--shadow);
+  }
+  .card h2 { margin: 0 0 4px; font-size: 0.85rem; letter-spacing: .02em; color: var(--brand-dark); text-transform: uppercase; }
+  .card .card-sub { margin: 0 0 14px; font-size: 0.78rem; color: var(--muted); }
+
+  .grid { display: grid; gap: 16px; margin-bottom: 16px; }
+  .grid-2 { grid-template-columns: minmax(320px, 1fr) minmax(340px, 1.6fr); }
+  @media (max-width: 820px) { .grid-2 { grid-template-columns: 1fr; } }
+
+  /* ---- Donut ---- */
+  .donut-wrap { display: flex; align-items: center; gap: 18px; flex-wrap: wrap; }
+  .donut { width: 150px; height: 150px; border-radius: 50%; flex-shrink: 0; position: relative; }
+  .donut::after {
+    content: ''; position: absolute; inset: 22px; border-radius: 50%; background: var(--card);
+  }
+  .donut-legend { flex: 1; min-width: 170px; }
+  .legend-row { display: flex; align-items: center; gap: 8px; font-size: 0.8rem; margin-bottom: 9px; }
+  .legend-swatch { width: 10px; height: 10px; border-radius: 3px; flex-shrink: 0; }
+  .legend-name { flex: 1; }
+  .legend-value { font-variant-numeric: tabular-nums; color: var(--muted); white-space: nowrap; }
+  .donut-total { text-align: center; margin-top: 18px; padding-top: 14px; border-top: 1px solid var(--border); }
+  .donut-total .stat-value { font-size: 1.9rem; font-weight: 700; color: var(--brand-dark); font-variant-numeric: tabular-nums; }
+  .donut-total .stat-label { font-size: 0.78rem; color: var(--muted); margin-top: 2px; }
+
+  /* ---- Column chart ---- */
+  .col-chart-toolbar { display: flex; justify-content: flex-end; margin-bottom: 8px; }
+  .col-chart-toolbar input[type="search"] {
+    padding: 6px 10px; border: 1px solid var(--border); border-radius: 8px;
+    background: var(--bg); color: var(--text); font-size: 0.8rem; width: 180px;
+  }
+  .col-chart {
+    display: flex; align-items: flex-end; gap: 14px;
+    height: 200px; overflow-x: auto; padding: 0 30px 46px 40px;
+  }
+  .col-chart .col {
+    display: flex; flex-direction: column; align-items: center; justify-content: flex-end;
+    height: 100%; min-width: 30px; flex: 1 0 30px; position: relative;
+  }
+  .col-chart .col .col-value {
+    font-size: 0.7rem; margin-bottom: 4px; color: var(--text);
+    font-variant-numeric: tabular-nums; white-space: nowrap;
+  }
+  .col-chart .col .col-bar { width: 20px; background: var(--accent); border-radius: 4px 4px 0 0; min-height: 2px; }
+  .col-chart .col .col-label {
+    position: absolute; top: 100%; margin-top: 8px; left: 50%;
+    transform: translateX(-50%) rotate(-42deg); transform-origin: top center;
+    font-size: 0.66rem; color: var(--muted); white-space: nowrap; max-width: 90px;
+  }
+
+  /* ---- Raw table (Vistorias / Agenda, sem resumo ainda) ---- */
+  .panel-toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; margin-bottom: 14px; }
+  .panel-toolbar input[type="search"] {
+    flex: 1; min-width: 200px; padding: 8px 12px; border: 1px solid var(--border);
+    border-radius: 8px; background: var(--card); color: var(--text); font-size: 0.9rem;
+  }
+  .table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 12px; background: var(--card); box-shadow: var(--shadow); }
+  table { border-collapse: collapse; width: 100%; font-size: 0.9rem; }
+  th, td { text-align: left; padding: 10px 14px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+  thead th { background: var(--accent-bg); color: var(--brand-dark); position: sticky; top: 0; }
   tbody tr:last-child td { border-bottom: none; }
   .empty-state {
-    padding: 40px 20px;
-    text-align: center;
-    color: var(--muted);
-    border: 1px dashed var(--border);
-    border-radius: 10px;
-    background: var(--card);
+    padding: 40px 20px; text-align: center; color: var(--muted);
+    border: 1px dashed var(--border); border-radius: 12px; background: var(--card);
   }
   .summary-wrap { display: none; }
   .summary-wrap.visible { display: block; }
-  .summary-total {
-    font-size: 1.6rem;
-    font-weight: 600;
-    margin: 0 0 4px;
-  }
-  .summary-total-label { color: var(--muted); font-size: 0.85rem; margin: 0 0 20px; }
-  .summary-section {
-    background: var(--card);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 16px 18px;
-    margin-bottom: 16px;
-  }
-  .summary-section h2 {
-    margin: 0 0 14px;
-    font-size: 1rem;
-    color: var(--text);
-  }
-  .bar-row {
-    display: grid;
-    grid-template-columns: minmax(120px, 200px) 1fr 56px;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 6px;
-  }
-  .bar-row .bar-label {
-    font-size: 0.85rem;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  .bar-row .bar-track {
-    display: block;
-    height: 18px;
-    background: var(--accent-bg);
-    border-radius: 4px;
-  }
-  .bar-row .bar-fill {
-    display: block;
-    height: 100%;
-    background: var(--accent);
-    border-radius: 4px;
-    min-width: 2px;
-  }
-  .bar-row .bar-value {
-    font-size: 0.85rem;
-    color: var(--text);
-    text-align: right;
-    font-variant-numeric: tabular-nums;
-  }
 </style>
 </head>
 <body>
-<header>
-  <h1>Pós-Obra</h1>
-  <p>Painel de acompanhamento pós-obra, atualizado automaticamente todo dia a partir das planilhas.</p>
-</header>
-<nav class="tabs" id="tabs"></nav>
-<main id="panels"></main>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="brand-mark">SA</div>
+      <div class="brand-name">Sousa Araújo</div>
+      <div class="brand-sub">Construtora</div>
+    </div>
+    <nav class="side-nav" id="tabs"></nav>
+  </aside>
+  <div class="content">
+    <header class="page-header">
+      <div>
+        <span class="brand-kicker">Construtora Sousa Araújo</span>
+        <h1 id="page-title">Pós-Obra</h1>
+        <p id="page-subtitle">Painel de acompanhamento, atualizado automaticamente todo dia.</p>
+      </div>
+      <div class="header-meta">
+        <div class="meta-box" id="periodo-box" hidden>
+          <span class="meta-label">Período</span>
+          <span class="meta-value" id="periodo-value">—</span>
+        </div>
+        <div class="meta-box">
+          <span class="meta-label">Atualizado em</span>
+          <span class="meta-value" id="updated-at-value">—</span>
+        </div>
+        <a class="external-link" id="external-link" target="_blank" rel="noopener" hidden>Abrir link externo ↗</a>
+      </div>
+    </header>
+    <main id="panels"></main>
+  </div>
+</div>
 
 <script>
 const TABS = [
-  { id: 'pos-obra', label: 'Pós-Obra' },
-  { id: 'vistorias', label: 'Vistorias de Qualidade e Pós-Obra' },
-  { id: 'agenda', label: 'Agenda Pós-Obra' },
+  { id: 'pos-obra', label: 'Pós-Obra', icon: '🛠️', subtitle: 'Acompanhe os chamados de assistência técnica por empreendimento e família.' },
+  { id: 'vistorias', label: 'Vistorias de Qualidade e Pós-Obra', icon: '📋', subtitle: 'Dados da planilha de vistorias.' },
+  { id: 'agenda', label: 'Agenda Pós-Obra', icon: '🗓️', subtitle: 'Dados da planilha de agenda.' },
 ];
+
+const FAMILIA_COLORS = {
+  'Hidráulica': '#d9482f',
+  'Elétrica': '#e8a33d',
+  'Esquadrias (portas/janelas)': '#7a1f1f',
+  'Acabamento/Estrutural': '#e8938a',
+  'Marcenaria': '#c9beb8',
+  'Outros': '#9c8b83',
+};
+const FALLBACK_COLOR = '#9c8b83';
 
 const tabsEl = document.getElementById('tabs');
 const panelsEl = document.getElementById('panels');
+const pageTitle = document.getElementById('page-title');
+const pageSubtitle = document.getElementById('page-subtitle');
+const periodoBox = document.getElementById('periodo-box');
+const periodoValue = document.getElementById('periodo-value');
+const updatedAtValue = document.getElementById('updated-at-value');
+const externalLinkEl = document.getElementById('external-link');
 const state = {};
 
 function formatDate(iso) {
   if (!iso) return 'nunca';
-  const d = new Date(iso);
-  return d.toLocaleString('pt-BR');
+  return new Date(iso).toLocaleString('pt-BR');
 }
 
-function renderBarList(container, items, { labelKey, valueKey, valueLabel }) {
+function escapeHtml(value) {
+  return String(value ?? '').replace(/[&<>"']/g, (ch) => ({
+    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
+  }[ch]));
+}
+
+function renderDonut(panel, porFamilia) {
+  let acc = 0;
+  const stops = porFamilia.map((item) => {
+    const color = FAMILIA_COLORS[item.familia] || FALLBACK_COLOR;
+    const start = acc;
+    acc += item.percentual;
+    return `${color} ${start}% ${acc}%`;
+  });
+  panel.querySelector('.donut').style.background = `conic-gradient(${stops.join(', ')})`;
+  panel.querySelector('.donut-legend').innerHTML = porFamilia
+    .map(
+      (item) => `
+        <div class="legend-row">
+          <span class="legend-swatch" style="background:${FAMILIA_COLORS[item.familia] || FALLBACK_COLOR}"></span>
+          <span class="legend-name">${escapeHtml(item.familia)}</span>
+          <span class="legend-value">${item.percentual}% (${item.total.toLocaleString('pt-BR')})</span>
+        </div>`
+    )
+    .join('');
+}
+
+function renderColumnChart(container, items, { labelKey, valueKey }) {
   const max = Math.max(1, ...items.map((item) => item[valueKey]));
   container.innerHTML = items
     .map(
       (item) => `
-        <div class="bar-row">
-          <span class="bar-label" title="${escapeHtml(item[labelKey])}">${escapeHtml(item[labelKey])}</span>
-          <span class="bar-track"><span class="bar-fill" style="width:${(item[valueKey] / max) * 100}%"></span></span>
-          <span class="bar-value">${escapeHtml(valueLabel(item))}</span>
+        <div class="col">
+          <span class="col-value">${item[valueKey].toLocaleString('pt-BR')}</span>
+          <span class="col-bar" style="height:${(item[valueKey] / max) * 100}%"></span>
+          <span class="col-label" title="${escapeHtml(item[labelKey])}">${escapeHtml(item[labelKey])}</span>
         </div>`
     )
     .join('');
@@ -215,24 +283,31 @@ function renderSummary(panel, data, search) {
     ? summary.porEmpreendimento.filter((item) => item.empreendimento.toLowerCase().includes(search))
     : summary.porEmpreendimento;
 
-  panel.querySelector('.summary-total').textContent = summary.totalChamados.toLocaleString('pt-BR');
-  renderBarList(panel.querySelector('.by-empreendimento'), porEmpreendimento, {
+  panel.querySelector('.donut-total .stat-value').textContent = summary.totalChamados.toLocaleString('pt-BR');
+  renderDonut(panel, summary.porFamilia);
+  renderColumnChart(panel.querySelector('.by-empreendimento'), porEmpreendimento, {
     labelKey: 'empreendimento',
     valueKey: 'total',
-    valueLabel: (item) => item.total.toLocaleString('pt-BR'),
   });
-  renderBarList(panel.querySelector('.by-familia'), summary.porFamilia, {
-    labelKey: 'familia',
-    valueKey: 'percentual',
-    valueLabel: (item) => `${item.percentual}%`,
+  renderColumnChart(panel.querySelector('.by-mes'), summary.porMes.slice(-12), {
+    labelKey: 'mes',
+    valueKey: 'total',
   });
+
+  if (summary.porMes.length) {
+    periodoBox.hidden = false;
+    periodoValue.textContent = `${summary.porMes[0].mes} – ${summary.porMes[summary.porMes.length - 1].mes}`;
+  } else {
+    periodoBox.hidden = true;
+  }
 }
 
 function renderTable(panel, data) {
   const tableWrap = panel.querySelector('.table-wrap');
   const summaryWrap = panel.querySelector('.summary-wrap');
   const emptyState = panel.querySelector('.empty-state');
-  const search = (panel.querySelector('input[type="search"]').value || '').trim().toLowerCase();
+  const searchInput = panel.querySelector('input[type="search"]');
+  const search = (searchInput && searchInput.value || '').trim().toLowerCase();
 
   if (data.summary) {
     tableWrap.hidden = true;
@@ -242,6 +317,7 @@ function renderTable(panel, data) {
     return;
   }
   summaryWrap.classList.remove('visible');
+  periodoBox.hidden = true;
 
   const rows = search
     ? data.rows.filter((row) => Object.values(row).some((v) => String(v).toLowerCase().includes(search)))
@@ -267,12 +343,6 @@ function renderTable(panel, data) {
   tableWrap.querySelector('table').innerHTML = thead + tbody;
 }
 
-function escapeHtml(value) {
-  return String(value ?? '').replace(/[&<>"']/g, (ch) => ({
-    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;',
-  }[ch]));
-}
-
 async function loadTab(tab, links) {
   const panel = document.getElementById(`panel-${tab.id}`);
   let data = { configured: false, updatedAt: null, columns: [], rows: [] };
@@ -283,18 +353,27 @@ async function loadTab(tab, links) {
     console.error(`Falha ao carregar dados de ${tab.id}`, err);
   }
   state[tab.id] = data;
-  panel.querySelector('.updated-at').textContent = `Atualizado em: ${formatDate(data.updatedAt)}`;
+  panel.dataset.updatedAt = data.updatedAt || '';
 
   const link = links && links[tab.id];
-  const linkEl = panel.querySelector('.external-link');
-  if (link) {
-    linkEl.href = link;
-    linkEl.hidden = false;
-  } else {
-    linkEl.hidden = true;
-  }
+  panel.dataset.externalLink = link || '';
 
+  if (panel.classList.contains('active')) syncHeader(tab, panel);
   renderTable(panel, data);
+}
+
+function syncHeader(tab, panel) {
+  pageTitle.textContent = tab.label;
+  pageSubtitle.textContent = tab.subtitle || '';
+  updatedAtValue.textContent = formatDate(panel.dataset.updatedAt);
+  const link = panel.dataset.externalLink;
+  if (link) {
+    externalLinkEl.href = link;
+    externalLinkEl.hidden = false;
+  } else {
+    externalLinkEl.hidden = true;
+  }
+  periodoBox.hidden = true;
 }
 
 function buildPanel(tab) {
@@ -302,35 +381,55 @@ function buildPanel(tab) {
   panel.className = 'panel';
   panel.id = `panel-${tab.id}`;
   panel.innerHTML = `
+    <div class="summary-wrap">
+      <div class="grid grid-2">
+        <div class="card">
+          <h2>Família dos chamados</h2>
+          <p class="card-sub">Distribuição por tipo de problema</p>
+          <div class="donut-wrap">
+            <div class="donut"></div>
+            <div class="donut-legend"></div>
+          </div>
+          <div class="donut-total">
+            <div class="stat-value">0</div>
+            <div class="stat-label">chamados no total</div>
+          </div>
+        </div>
+        <div class="card">
+          <h2>Chamados por empreendimento</h2>
+          <p class="card-sub">Quantidade de chamados abertos, por empreendimento</p>
+          <div class="col-chart-toolbar">
+            <input type="search" placeholder="Buscar empreendimento..." />
+          </div>
+          <div class="col-chart by-empreendimento"></div>
+        </div>
+      </div>
+      <div class="card">
+        <h2>Chamados por mês</h2>
+        <p class="card-sub">Últimos 12 meses, pela data de abertura</p>
+        <div class="col-chart by-mes"></div>
+      </div>
+    </div>
     <div class="panel-toolbar">
       <input type="search" placeholder="Buscar em ${escapeHtml(tab.label)}..." />
-      <span class="updated-at">Atualizado em: —</span>
-      <a class="external-link" target="_blank" rel="noopener" hidden>Abrir link externo ↗</a>
     </div>
     <div class="table-wrap"><table></table></div>
-    <div class="summary-wrap">
-      <p class="summary-total">0</p>
-      <p class="summary-total-label">chamados no total</p>
-      <div class="summary-section">
-        <h2>Chamados por empreendimento</h2>
-        <div class="by-empreendimento"></div>
-      </div>
-      <div class="summary-section">
-        <h2>Família dos chamados</h2>
-        <div class="by-familia"></div>
-      </div>
-    </div>
     <div class="empty-state" hidden></div>
   `;
-  panel.querySelector('input[type="search"]').addEventListener('input', () => {
-    renderTable(panel, state[tab.id] || { columns: [], rows: [] });
-  });
+  for (const input of panel.querySelectorAll('input[type="search"]')) {
+    input.addEventListener('input', () => renderTable(panel, state[tab.id] || { columns: [], rows: [] }));
+  }
   return panel;
 }
 
 function activateTab(id) {
   for (const btn of tabsEl.children) btn.classList.toggle('active', btn.dataset.id === id);
-  for (const panel of panelsEl.children) panel.classList.toggle('active', panel.id === `panel-${id}`);
+  const tab = TABS.find((t) => t.id === id);
+  for (const panel of panelsEl.children) {
+    const isActive = panel.id === `panel-${id}`;
+    panel.classList.toggle('active', isActive);
+    if (isActive) syncHeader(tab, panel);
+  }
 }
 
 async function init() {
@@ -344,7 +443,7 @@ async function init() {
 
   for (const tab of TABS) {
     const btn = document.createElement('button');
-    btn.textContent = tab.label;
+    btn.innerHTML = `<span class="icon">${tab.icon}</span><span>${escapeHtml(tab.label)}</span>`;
     btn.dataset.id = tab.id;
     btn.addEventListener('click', () => activateTab(tab.id));
     tabsEl.appendChild(btn);

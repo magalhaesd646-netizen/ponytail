@@ -39,4 +39,21 @@ test('summarizePosObra handles an empty row set without dividing by zero', () =>
   assert.equal(summary.totalChamados, 0);
   assert.deepEqual(summary.porEmpreendimento, []);
   assert.deepEqual(summary.porFamilia, []);
+  assert.deepEqual(summary.porMes, []);
+});
+
+test('summarizePosObra groups chamados per month in chronological order', () => {
+  const rows = [
+    { Empreendimento: 'A', Data: '15/01/2026', Descrição: 'x' },
+    { Empreendimento: 'A', Data: '20/01/2026', Descrição: 'x' },
+    { Empreendimento: 'A', Data: '02/12/2025', Descrição: 'x' },
+    { Empreendimento: 'A', Data: 'data inválida', Descrição: 'x' },
+  ];
+
+  const { porMes } = summarizePosObra(rows);
+
+  assert.deepEqual(porMes, [
+    { mes: 'dez/25', total: 1 },
+    { mes: 'jan/26', total: 2 },
+  ]);
 });

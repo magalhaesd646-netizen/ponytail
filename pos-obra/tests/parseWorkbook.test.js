@@ -43,3 +43,20 @@ test('parseWorkbook reads the requested sheet by name, falling back to the first
   const fallback = await parseWorkbook(buffer, 'NaoExiste');
   assert.equal(fallback.sheetName, 'Resumo');
 });
+
+test('parseWorkbook reads a semicolon-delimited CSV buffer (pt-BR export)', async () => {
+  const csv = 'Unidade;Status\n101;Concluída\n102;Pendente\n';
+  const result = await parseWorkbook(Buffer.from(csv, 'utf8'));
+
+  assert.deepEqual(result.columns, ['Unidade', 'Status']);
+  assert.equal(result.rows.length, 2);
+  assert.equal(result.rows[0].Status, 'Concluída');
+});
+
+test('parseWorkbook reads a comma-delimited CSV buffer', async () => {
+  const csv = 'Unidade,Status\n101,Concluída\n102,Pendente\n';
+  const result = await parseWorkbook(Buffer.from(csv, 'utf8'));
+
+  assert.deepEqual(result.columns, ['Unidade', 'Status']);
+  assert.equal(result.rows.length, 2);
+});

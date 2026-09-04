@@ -15,9 +15,9 @@ async function fetchWorkbook(shareUrl) {
   const apiUrl = `https://api.onedrive.com/v1.0/shares/${token}/root/content`;
   const res = await fetch(apiUrl, { redirect: 'follow' });
   if (!res.ok) {
-    const location = res.headers.get('location');
-    const detail = location ? ` — redirecionou para: ${location}` : '';
-    throw new Error(`Falha ao baixar planilha (HTTP ${res.status})${detail}`);
+    const headers = [...res.headers.entries()].map(([k, v]) => `${k}: ${v}`).join(' | ');
+    const body = (await res.text().catch(() => '')).slice(0, 300);
+    throw new Error(`Falha ao baixar planilha (HTTP ${res.status}) — headers: ${headers} — body: ${body}`);
   }
   const arrayBuffer = await res.arrayBuffer();
   return Buffer.from(arrayBuffer);

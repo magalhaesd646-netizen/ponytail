@@ -1,323 +1,33 @@
 {
   "configured": true,
-  "updatedAt": "2026-09-08T10:16:11.352Z",
-  "sheetName": "sheet1",
+  "updatedAt": "2026-09-08T21:00:33.702Z",
+  "sheetName": "BASE UAU 06.08",
   "sheetNames": [
-    "sheet1"
+    "BASE UAU 06.08",
+    "CUSTOS",
+    "FINANCEIRO",
+    "BASE CV - 08.09",
+    "CHAMADOS TOTAIS",
+    "CHAMADOS ÚNICOS",
+    "RESUMO CHAMADOS",
+    "ITENS",
+    "RESUMO EMPREENDIMENTOS"
   ],
   "summary": {
-    "totalChamados": 11051,
+    "totalChamados": 1933,
     "porEmpreendimento": [
       {
-        "empreendimento": "GRAN PORTINARI",
-        "total": 1025
-      },
-      {
-        "empreendimento": "MONDRIAN",
-        "total": 829
-      },
-      {
-        "empreendimento": "SOU VIVER FLORENÇA",
-        "total": 793
-      },
-      {
-        "empreendimento": "RIVERA",
-        "total": 765
-      },
-      {
-        "empreendimento": "COLISEUM",
-        "total": 702
-      },
-      {
-        "empreendimento": "PDV",
-        "total": 685
-      },
-      {
-        "empreendimento": "AMETISTA",
-        "total": 683
-      },
-      {
-        "empreendimento": "BURLE MARX",
-        "total": 661
-      },
-      {
-        "empreendimento": "DUMONT",
-        "total": 602
-      },
-      {
-        "empreendimento": "COLISEUM II",
-        "total": 579
-      },
-      {
-        "empreendimento": "TANGARA I",
-        "total": 527
-      },
-      {
-        "empreendimento": "SIENA",
-        "total": 505
-      },
-      {
-        "empreendimento": "MOOD MOOCA",
-        "total": 430
-      },
-      {
-        "empreendimento": "CEREJEIRAS",
-        "total": 406
-      },
-      {
-        "empreendimento": "DA VINCI",
-        "total": 395
-      },
-      {
-        "empreendimento": "BABILONIA",
-        "total": 245
-      },
-      {
-        "empreendimento": "TANGARA II",
-        "total": 240
-      },
-      {
-        "empreendimento": "Mood Itaquera",
-        "total": 196
-      },
-      {
-        "empreendimento": "ASTA III",
-        "total": 196
-      },
-      {
-        "empreendimento": "SOU VIVER POA",
-        "total": 137
-      },
-      {
-        "empreendimento": "ASTA I",
-        "total": 111
-      },
-      {
-        "empreendimento": "ASTA II",
-        "total": 97
-      },
-      {
-        "empreendimento": "SOU PLENO VISAGE",
-        "total": 86
-      },
-      {
-        "empreendimento": "VIDALIA",
-        "total": 66
-      },
-      {
-        "empreendimento": "LUMINA",
-        "total": 39
-      },
-      {
-        "empreendimento": "ECO PARK",
-        "total": 28
-      },
-      {
         "empreendimento": "(sem empreendimento)",
-        "total": 12
-      },
-      {
-        "empreendimento": "Village Iris",
-        "total": 4
-      },
-      {
-        "empreendimento": "Vilage Iris",
-        "total": 2
-      },
-      {
-        "empreendimento": "VILLA VENEZA",
-        "total": 2
-      },
-      {
-        "empreendimento": "SOU VIVER VICENZA",
-        "total": 2
-      },
-      {
-        "empreendimento": "SOU PLENO PAISAGE",
-        "total": 1
+        "total": 1933
       }
     ],
     "porFamilia": [
       {
-        "familia": "Hidráulica",
-        "total": 6904,
-        "percentual": 62.5
-      },
-      {
-        "familia": "Elétrica",
-        "total": 1587,
-        "percentual": 14.4
-      },
-      {
         "familia": "Outros",
-        "total": 1208,
-        "percentual": 10.9
-      },
-      {
-        "familia": "Esquadrias (portas/janelas)",
-        "total": 867,
-        "percentual": 7.8
-      },
-      {
-        "familia": "Acabamento/Estrutural",
-        "total": 477,
-        "percentual": 4.3
-      },
-      {
-        "familia": "Marcenaria",
-        "total": 8,
-        "percentual": 0.1
+        "total": 1933,
+        "percentual": 100
       }
     ],
-    "porMes": [
-      {
-        "mes": "jul/23",
-        "total": 1
-      },
-      {
-        "mes": "set/23",
-        "total": 213
-      },
-      {
-        "mes": "out/23",
-        "total": 180
-      },
-      {
-        "mes": "nov/23",
-        "total": 62
-      },
-      {
-        "mes": "dez/23",
-        "total": 50
-      },
-      {
-        "mes": "jan/24",
-        "total": 96
-      },
-      {
-        "mes": "fev/24",
-        "total": 44
-      },
-      {
-        "mes": "mar/24",
-        "total": 48
-      },
-      {
-        "mes": "abr/24",
-        "total": 76
-      },
-      {
-        "mes": "mai/24",
-        "total": 70
-      },
-      {
-        "mes": "jun/24",
-        "total": 109
-      },
-      {
-        "mes": "jul/24",
-        "total": 177
-      },
-      {
-        "mes": "ago/24",
-        "total": 442
-      },
-      {
-        "mes": "set/24",
-        "total": 378
-      },
-      {
-        "mes": "out/24",
-        "total": 400
-      },
-      {
-        "mes": "nov/24",
-        "total": 354
-      },
-      {
-        "mes": "dez/24",
-        "total": 390
-      },
-      {
-        "mes": "jan/25",
-        "total": 683
-      },
-      {
-        "mes": "fev/25",
-        "total": 884
-      },
-      {
-        "mes": "mar/25",
-        "total": 298
-      },
-      {
-        "mes": "abr/25",
-        "total": 296
-      },
-      {
-        "mes": "mai/25",
-        "total": 219
-      },
-      {
-        "mes": "jun/25",
-        "total": 226
-      },
-      {
-        "mes": "jul/25",
-        "total": 400
-      },
-      {
-        "mes": "ago/25",
-        "total": 374
-      },
-      {
-        "mes": "set/25",
-        "total": 382
-      },
-      {
-        "mes": "out/25",
-        "total": 488
-      },
-      {
-        "mes": "nov/25",
-        "total": 476
-      },
-      {
-        "mes": "dez/25",
-        "total": 330
-      },
-      {
-        "mes": "jan/26",
-        "total": 341
-      },
-      {
-        "mes": "fev/26",
-        "total": 288
-      },
-      {
-        "mes": "mar/26",
-        "total": 496
-      },
-      {
-        "mes": "abr/26",
-        "total": 346
-      },
-      {
-        "mes": "mai/26",
-        "total": 266
-      },
-      {
-        "mes": "jun/26",
-        "total": 452
-      },
-      {
-        "mes": "jul/26",
-        "total": 433
-      },
-      {
-        "mes": "ago/26",
-        "total": 283
-      }
-    ]
+    "porMes": []
   }
 }

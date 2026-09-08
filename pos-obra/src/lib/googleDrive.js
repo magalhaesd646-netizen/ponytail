@@ -7,10 +7,7 @@
 // - planilha nativa do Sheets: /spreadsheets/d/<id>/edit
 // - planilha "Publicada na Web": /spreadsheets/d/e/<pubId>/pubhtml (Arquivo
 //   > Compartilhar > Publicar na Web) — link com um ID em formato diferente
-//   (prefixo "2PACX-"), servido por uma infra de cache pública do Google
-//   pensada pra embutir em outros sites, que na prática não aciona o
-//   desafio anti-bot que os outros dois formatos sofreram vindo do IP dos
-//   runners do GitHub Actions (ver PR #47).
+//   (prefixo "2PACX-").
 function extractPublishedId(url) {
   const match = url.match(/\/spreadsheets\/d\/e\/([^/]+)/);
   return match ? match[1] : null;
@@ -33,6 +30,10 @@ function isPublishedSheetUrl(url) {
 // Uma planilha nativa do Sheets não é um "arquivo" no Drive (não tem bytes
 // de .xlsx armazenados) — precisa ser exportada por um endpoint próprio, em
 // vez do link de download genérico usado para arquivos .xlsx/.csv soltos.
+// Mas um arquivo .xlsx enviado ao Drive e só aberto no editor do Sheets
+// (modo de compatibilidade do Office) também usa esse mesmo formato de URL
+// mesmo sendo um arquivo de verdade — por isso, na dúvida, tentamos o
+// endpoint de arquivo do Drive primeiro (ver `candidateDownloadUrls`).
 function isNativeSheetUrl(url) {
   return /\/spreadsheets\/d\//.test(url) && !isPublishedSheetUrl(url);
 }
@@ -50,16 +51,27 @@ function looksLikeHtmlPage(buffer) {
 const BROWSER_USER_AGENT =
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36';
 
-function buildDownloadUrl(shareUrl, id) {
-  if (isPublishedSheetUrl(shareUrl)) return `https://docs.google.com/spreadsheets/d/e/${id}/pub?output=xlsx`;
-  if (isNativeSheetUrl(shareUrl)) return `https://docs.google.com/spreadsheets/d/${id}/export?format=xlsx`;
-  return `https://drive.google.com/uc?export=download&id=${id}`;
+// Uma URL no formato "planilha nativa" (/spreadsheets/d/<id>) pode, na
+// prática, apontar tanto para um Google Sheets de verdade quanto para um
+// .xlsx comum enviado ao Drive e só aberto no editor do Sheets — os dois
+// têm a mesma cara de URL, e não dá pra saber qual é sem tentar. O endpoint
+// de arquivo do Drive (uc?export=download) atende o segundo caso e, na
+// prática, não aciona o desafio anti-bot que o endpoint de exportação do
+// Sheets aciona vindo do IP dos runners do GitHub Actions — por isso vai
+// primeiro; o endpoint de exportação do Sheets fica como segunda tentativa,
+// para quando for mesmo um Sheets nativo.
+function candidateDownloadUrls(shareUrl, id) {
+  if (isPublishedSheetUrl(shareUrl)) return [`https://docs.google.com/spreadsheets/d/e/${id}/pub?output=xlsx`];
+  if (isNativeSheetUrl(shareUrl)) {
+    return [
+      `https://drive.google.com/uc?export=download&id=${id}`,
+      `https://docs.google.com/spreadsheets/d/${id}/export?format=xlsx`,
+    ];
+  }
+  return [`https://drive.google.com/uc?export=download&id=${id}`];
 }
 
-async function fetchWorkbook(shareUrl) {
-  const id = extractFileId(shareUrl);
-  const downloadUrl = buildDownloadUrl(shareUrl, id);
-
+async function downloadOnce(downloadUrl) {
   const fetchOpts = { redirect: 'follow', headers: { 'User-Agent': BROWSER_USER_AGENT } };
   let res = await fetch(downloadUrl, fetchOpts);
   let buffer = Buffer.from(await res.arrayBuffer());
@@ -75,17 +87,35 @@ async function fetchWorkbook(shareUrl) {
     }
   }
 
-  if (!res.ok) {
-    const preview = buffer.toString('utf8').slice(0, 500).replace(/\s+/g, ' ');
-    throw new Error(
-      `Falha ao baixar planilha do Google Drive (HTTP ${res.status} ${res.statusText}) — resposta: ${preview}`
-    );
+  return { res, buffer };
+}
+
+async function fetchWorkbook(shareUrl) {
+  const id = extractFileId(shareUrl);
+  const candidates = candidateDownloadUrls(shareUrl, id);
+
+  let lastError;
+  for (const downloadUrl of candidates) {
+    const { res, buffer } = await downloadOnce(downloadUrl);
+
+    if (res.ok && !looksLikeHtmlPage(buffer)) return buffer;
+
+    lastError = res.ok
+      ? new Error(
+          `O Google Drive devolveu uma página HTML em vez do arquivo — resposta: ${buffer
+            .toString('utf8')
+            .slice(0, 300)
+            .replace(/\s+/g, ' ')}`
+        )
+      : new Error(
+          `Falha ao baixar planilha do Google Drive (HTTP ${res.status} ${res.statusText}) — resposta: ${buffer
+            .toString('utf8')
+            .slice(0, 500)
+            .replace(/\s+/g, ' ')}`
+        );
   }
-  if (looksLikeHtmlPage(buffer)) {
-    const preview = buffer.toString('utf8').slice(0, 300).replace(/\s+/g, ' ');
-    throw new Error(`O Google Drive devolveu uma página HTML em vez do arquivo — resposta: ${preview}`);
-  }
-  return buffer;
+
+  throw lastError;
 }
 
 module.exports = { extractFileId, isNativeSheetUrl, isPublishedSheetUrl, fetchWorkbook };

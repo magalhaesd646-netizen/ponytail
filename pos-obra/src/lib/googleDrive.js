@@ -2,12 +2,23 @@
 
 // Baixa o conteúdo de um arquivo do Google Drive a partir de um link de
 // compartilhamento ("Qualquer pessoa com o link"), sem precisar de login.
+// Aceita tanto um arquivo hospedado no Drive (/file/d/<id>/view) quanto uma
+// planilha nativa do Google Sheets (/spreadsheets/d/<id>/edit) — essa
+// segunda vem de "Arquivo > Compartilhar" dentro do próprio Sheets, não do
+// Drive, mas o ID fica no mesmo lugar do caminho.
 function extractFileId(url) {
-  const pathMatch = url.match(/\/file\/d\/([^/]+)/);
+  const pathMatch = url.match(/\/(?:file|spreadsheets)\/d\/([^/]+)/);
   if (pathMatch) return pathMatch[1];
   const queryMatch = url.match(/[?&]id=([^&]+)/);
   if (queryMatch) return queryMatch[1];
   throw new Error('Não foi possível extrair o ID do arquivo do link do Google Drive');
+}
+
+// Uma planilha nativa do Sheets não é um "arquivo" no Drive (não tem bytes
+// de .xlsx armazenados) — precisa ser exportada por um endpoint próprio, em
+// vez do link de download genérico usado para arquivos .xlsx/.csv soltos.
+function isNativeSheetUrl(url) {
+  return /\/spreadsheets\/d\//.test(url);
 }
 
 // O arquivo pode vir como .xlsx (zip, começa com "PK") ou como .csv (texto).
@@ -19,7 +30,9 @@ function looksLikeHtmlPage(buffer) {
 
 async function fetchWorkbook(shareUrl) {
   const id = extractFileId(shareUrl);
-  const downloadUrl = `https://drive.google.com/uc?export=download&id=${id}`;
+  const downloadUrl = isNativeSheetUrl(shareUrl)
+    ? `https://docs.google.com/spreadsheets/d/${id}/export?format=xlsx`
+    : `https://drive.google.com/uc?export=download&id=${id}`;
 
   let res = await fetch(downloadUrl, { redirect: 'follow' });
   let buffer = Buffer.from(await res.arrayBuffer());
@@ -45,4 +58,4 @@ async function fetchWorkbook(shareUrl) {
   return buffer;
 }
 
-module.exports = { extractFileId, fetchWorkbook };
+module.exports = { extractFileId, isNativeSheetUrl, fetchWorkbook };

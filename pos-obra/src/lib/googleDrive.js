@@ -28,13 +28,20 @@ function looksLikeHtmlPage(buffer) {
   return /^\s*<(!doctype|html)/i.test(buffer.slice(0, 200).toString('utf8'));
 }
 
+// Sem um User-Agent de navegador, o Google trata a requisição como tráfego
+// automatizado (visto na prática vindo do IP dos runners do GitHub Actions)
+// e devolve uma página de desafio anti-bot em vez do arquivo.
+const BROWSER_USER_AGENT =
+  'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36';
+
 async function fetchWorkbook(shareUrl) {
   const id = extractFileId(shareUrl);
   const downloadUrl = isNativeSheetUrl(shareUrl)
     ? `https://docs.google.com/spreadsheets/d/${id}/export?format=xlsx`
     : `https://drive.google.com/uc?export=download&id=${id}`;
 
-  let res = await fetch(downloadUrl, { redirect: 'follow' });
+  const fetchOpts = { redirect: 'follow', headers: { 'User-Agent': BROWSER_USER_AGENT } };
+  let res = await fetch(downloadUrl, fetchOpts);
   let buffer = Buffer.from(await res.arrayBuffer());
 
   // Arquivos grandes (ou que o Google não consegue escanear) respondem com
@@ -43,7 +50,7 @@ async function fetchWorkbook(shareUrl) {
   if (res.ok && looksLikeHtmlPage(buffer)) {
     const confirmMatch = buffer.toString('utf8').match(/confirm=([0-9A-Za-z_-]+)/);
     if (confirmMatch) {
-      res = await fetch(`${downloadUrl}&confirm=${confirmMatch[1]}`, { redirect: 'follow' });
+      res = await fetch(`${downloadUrl}&confirm=${confirmMatch[1]}`, fetchOpts);
       buffer = Buffer.from(await res.arrayBuffer());
     }
   }

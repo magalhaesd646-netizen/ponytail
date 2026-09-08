@@ -49,7 +49,10 @@ async function fetchWorkbook(shareUrl) {
   }
 
   if (!res.ok) {
-    throw new Error(`Falha ao baixar planilha do Google Drive (HTTP ${res.status})`);
+    const preview = buffer.toString('utf8').slice(0, 500).replace(/\s+/g, ' ');
+    throw new Error(
+      `Falha ao baixar planilha do Google Drive (HTTP ${res.status} ${res.statusText}) — resposta: ${preview}`
+    );
   }
   if (looksLikeHtmlPage(buffer)) {
     const preview = buffer.toString('utf8').slice(0, 300).replace(/\s+/g, ' ');

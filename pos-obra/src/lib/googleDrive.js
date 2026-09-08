@@ -1,12 +1,24 @@
 'use strict';
 
-// Baixa o conteúdo de um arquivo do Google Drive a partir de um link de
-// compartilhamento ("Qualquer pessoa com o link"), sem precisar de login.
-// Aceita tanto um arquivo hospedado no Drive (/file/d/<id>/view) quanto uma
-// planilha nativa do Google Sheets (/spreadsheets/d/<id>/edit) — essa
-// segunda vem de "Arquivo > Compartilhar" dentro do próprio Sheets, não do
-// Drive, mas o ID fica no mesmo lugar do caminho.
+// Baixa o conteúdo de um arquivo do Google Drive/Sheets a partir de um link
+// de compartilhamento ("Qualquer pessoa com o link"), sem precisar de
+// login. Aceita três formatos:
+// - arquivo hospedado no Drive: /file/d/<id>/view (ou ?id=<id>)
+// - planilha nativa do Sheets: /spreadsheets/d/<id>/edit
+// - planilha "Publicada na Web": /spreadsheets/d/e/<pubId>/pubhtml (Arquivo
+//   > Compartilhar > Publicar na Web) — link com um ID em formato diferente
+//   (prefixo "2PACX-"), servido por uma infra de cache pública do Google
+//   pensada pra embutir em outros sites, que na prática não aciona o
+//   desafio anti-bot que os outros dois formatos sofreram vindo do IP dos
+//   runners do GitHub Actions (ver PR #47).
+function extractPublishedId(url) {
+  const match = url.match(/\/spreadsheets\/d\/e\/([^/]+)/);
+  return match ? match[1] : null;
+}
+
 function extractFileId(url) {
+  const publishedId = extractPublishedId(url);
+  if (publishedId) return publishedId;
   const pathMatch = url.match(/\/(?:file|spreadsheets)\/d\/([^/]+)/);
   if (pathMatch) return pathMatch[1];
   const queryMatch = url.match(/[?&]id=([^&]+)/);
@@ -14,11 +26,15 @@ function extractFileId(url) {
   throw new Error('Não foi possível extrair o ID do arquivo do link do Google Drive');
 }
 
+function isPublishedSheetUrl(url) {
+  return extractPublishedId(url) !== null;
+}
+
 // Uma planilha nativa do Sheets não é um "arquivo" no Drive (não tem bytes
 // de .xlsx armazenados) — precisa ser exportada por um endpoint próprio, em
 // vez do link de download genérico usado para arquivos .xlsx/.csv soltos.
 function isNativeSheetUrl(url) {
-  return /\/spreadsheets\/d\//.test(url);
+  return /\/spreadsheets\/d\//.test(url) && !isPublishedSheetUrl(url);
 }
 
 // O arquivo pode vir como .xlsx (zip, começa com "PK") ou como .csv (texto).
@@ -34,11 +50,15 @@ function looksLikeHtmlPage(buffer) {
 const BROWSER_USER_AGENT =
   'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/128.0.0.0 Safari/537.36';
 
+function buildDownloadUrl(shareUrl, id) {
+  if (isPublishedSheetUrl(shareUrl)) return `https://docs.google.com/spreadsheets/d/e/${id}/pub?output=xlsx`;
+  if (isNativeSheetUrl(shareUrl)) return `https://docs.google.com/spreadsheets/d/${id}/export?format=xlsx`;
+  return `https://drive.google.com/uc?export=download&id=${id}`;
+}
+
 async function fetchWorkbook(shareUrl) {
   const id = extractFileId(shareUrl);
-  const downloadUrl = isNativeSheetUrl(shareUrl)
-    ? `https://docs.google.com/spreadsheets/d/${id}/export?format=xlsx`
-    : `https://drive.google.com/uc?export=download&id=${id}`;
+  const downloadUrl = buildDownloadUrl(shareUrl, id);
 
   const fetchOpts = { redirect: 'follow', headers: { 'User-Agent': BROWSER_USER_AGENT } };
   let res = await fetch(downloadUrl, fetchOpts);
@@ -68,4 +88,4 @@ async function fetchWorkbook(shareUrl) {
   return buffer;
 }
 
-module.exports = { extractFileId, isNativeSheetUrl, fetchWorkbook };
+module.exports = { extractFileId, isNativeSheetUrl, isPublishedSheetUrl, fetchWorkbook };

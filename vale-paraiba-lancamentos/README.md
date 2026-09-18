@@ -214,10 +214,12 @@ tests/                     testes unitários (node --test)
 
 O workflow
 [`../.github/workflows/vale-paraiba-lancamentos.yml`](../.github/workflows/vale-paraiba-lancamentos.yml)
-roda a cada 3 dias às 08:00 (horário de Brasília) — o volume de novos
-lançamentos não justifica rodar todo dia, e o intervalo maior também poupa
-cota de busca — e também pode ser disparado manualmente pela aba
-**Actions**. A cada execução ele:
+roda todo dia às 08:00 (horário de Brasília) e também pode ser disparado
+manualmente pela aba **Actions**. Esse mesmo workflow é quem publica o
+GitHub Pages do repositório (job `deploy-pages`), então além dos
+lançamentos ele também republica os painéis dos apps irmãos
+(`investimentos`, `pos-obra`) que vivem no mesmo site — por isso precisa
+rodar todo dia. A cada execução ele:
 
 1. Roda o monitor (`npm start`).
 2. Commita `data/seen.json` de volta no repositório (histórico do que já foi

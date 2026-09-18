@@ -36,3 +36,16 @@ test('filterRelevantResults descarta resultados que não citam a cidade buscada'
   assert.equal(filtered.length, 2);
   assert.ok(filtered.every((r) => `${r.title} ${r.snippet}`.includes('Taubaté')));
 });
+
+test('filterRelevantResults descarta resultado que cita a cidade certa mas é de outro estado (caso real: Cruzeiro/Sarandi-PR)', () => {
+  const results = [
+    {
+      title: 'LANÇAMENTO! Jardim José Vignoto Sarandi-PR',
+      snippet: 'Um empreendimento totalmente planejado perto de Cruzeiro, com apartamentos na planta',
+    },
+    { title: 'Novo empreendimento em Cruzeiro, SP', snippet: 'apartamentos na planta a partir de R$ 200 mil' },
+  ];
+  const filtered = filterRelevantResults(results, 'Cruzeiro');
+  assert.equal(filtered.length, 1);
+  assert.match(filtered[0].title, /Cruzeiro, SP/);
+});

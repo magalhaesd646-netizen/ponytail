@@ -31,32 +31,51 @@ function textMentionsCity(text, city) {
   return normalizedText.includes(normalizedCity);
 }
 
-// Vocabulário que indica que o texto é mesmo sobre imóveis/lançamento —
-// sem isso, uma busca por "lançamento" + nome da cidade traz muita coisa
-// que não tem nada a ver (vaga de emprego, evento esportivo, previsão do
-// tempo, obituário...), porque a API de busca não garante que a frase
-// completa da query apareça no resultado.
+// Vocabulário genérico de imóveis — sozinho não basta, porque também
+// aparece em anúncio de revenda, aluguel ou só numa página institucional
+// da construtora (ex.: "Construtora e Incorporadora em Taubaté").
 const REAL_ESTATE_KEYWORDS = [
   'apartamento',
+  'casa',
   'imovel',
   'imoveis',
+  'imobiliari', // cobre imobiliário/imobiliária/imobiliarios (ex.: "lançamento imobiliário")
   'empreendimento',
+  'edificio',
   'condominio',
   'incorpora', // cobre incorporação/incorporadora/incorporador
   'construtora',
   'residencial',
   'dormitorio',
   'lote',
-  'banheiro',
-  'suite',
   'unidades',
   'metro quadrado',
   'metros quadrados',
-  'na planta',
-  'lancamento imobiliario',
 ];
 
-// Passa no filtro acima mas claramente não é um lançamento à venda —
+// Sinal específico de LANÇAMENTO (não só "é sobre imóvel") — sem exigir
+// isso além do vocabulário genérico acima, a busca aceitava qualquer
+// página com "apartamento"/"suíte"/"banheiro" no texto, incluindo revenda
+// e aluguel de imóveis prontos que não têm nada de novo lançamento.
+const LAUNCH_SIGNAL_KEYWORDS = [
+  'lanca', // cobre lança/lançar/lançando/lançamento/lançará (após normalizeText)
+  'lancamento',
+  'pre-venda',
+  'pre venda',
+  'novo empreendimento',
+  'na planta',
+  'em breve',
+  'estande de vendas',
+  'plantao de vendas',
+  'unidades a partir de',
+  'reserve sua unidade',
+  'reserva sua unidade',
+  'inicio das vendas',
+  'início das vendas',
+  'primeira fase de vendas',
+];
+
+// Passa nos dois filtros acima mas claramente não é um lançamento à venda —
 // aluguel/locação e vagas de emprego no setor imobiliário, por exemplo.
 // "gerente de" pega títulos de vaga tipo "Gerente de Incorporação e Novos
 // Negócios" (visto se repetindo em sites de emprego para várias cidades).
@@ -72,11 +91,92 @@ const NON_LAUNCH_EXCLUDE_KEYWORDS = [
   'oportunidade de emprego',
 ];
 
+// Exige vocabulário de imóveis E um sinal específico de lançamento — as
+// duas coisas juntas, não uma ou outra — para reduzir falso positivo de
+// texto que só é "sobre imóveis" sem ser sobre um lançamento novo.
 function textMentionsRealEstateLaunch(text) {
   if (!text) return false;
   const normalized = normalizeText(text);
   if (NON_LAUNCH_EXCLUDE_KEYWORDS.some((kw) => normalized.includes(kw))) return false;
-  return REAL_ESTATE_KEYWORDS.some((kw) => normalized.includes(kw));
+  const mentionsRealEstate = REAL_ESTATE_KEYWORDS.some((kw) => normalized.includes(kw));
+  const mentionsLaunch = LAUNCH_SIGNAL_KEYWORDS.some((kw) => normalized.includes(kw));
+  return mentionsRealEstate && mentionsLaunch;
+}
+
+// Siglas de UF diferentes de SP — usadas para pegar resultados que vieram
+// por engano de outro estado (ex.: busca por "Cruzeiro, SP" trazendo um
+// anúncio de "Sarandi-PR" só porque o texto cita "Cruzeiro" de outro jeito,
+// como nome de rua/bairro). A API de busca não garante o estado certo.
+// Ficam de fora as siglas que colidem com palavra comum do português
+// coloquial (texto de rede social é cheio disso): "ce"/"cê" (você), "se"
+// (se/if), "to" (tô, "estou"), "mt" (mt = muito, gíria de chat) — incluir
+// essas geraria falso positivo descartando lançamentos legítimos de SP.
+const OTHER_BRAZIL_UF_CODES = [
+  'ac', 'al', 'ap', 'am', 'ba', 'df', 'es', 'go', 'ma', 'ms',
+  'mg', 'pa', 'pb', 'pr', 'pe', 'pi', 'rj', 'rn', 'rs', 'ro', 'rr', 'sc',
+];
+
+// A sigla só conta se estiver isolada como "palavra", cercada por espaço,
+// vírgula, hífen, barra ou início/fim de texto — uma lista positiva desses
+// separadores, não "qualquer coisa que não seja letra". Isso importa porque
+// anúncio de imóvel é cheio de código de referência tipo "Ref. AP7152" ou
+// "AP1548-MA19", onde "AP"/"MA" colado a dígito não tem nada a ver com
+// Amapá/Maranhão — se o separador aceitasse dígito/pontuação, esses códigos
+// de referência virariam falso positivo de "outro estado".
+function textMentionsOtherBrazilianState(text) {
+  if (!text) return false;
+  const normalized = normalizeText(text);
+  return OTHER_BRAZIL_UF_CODES.some((uf) => {
+    const re = new RegExp(`(^|[\\s,/-])${uf}($|[\\s,/-])`);
+    return re.test(normalized);
+  });
+}
+
+// Ruído comum em texto raspado de feed do Instagram/Facebook (a página
+// indexada é o perfil inteiro, não um post só) — remover antes de tentar
+// achar uma frase útil, senão "Video by Fulano on March 3, 2026." vira o
+// "nome do lançamento".
+const SOCIAL_BOILERPLATE_PATTERNS = [
+  /title:\s*instagram/gi,
+  /never miss a post from [^.]+\./gi,
+  /(?:video|photo) by [^.]+ on \w+ \d{1,2},? \d{4}\.?/gi,
+  /may be an? (?:image|meme) of[^.]*\./gi,
+  /log in to like or comment\.?/gi,
+  /see more posts/gi,
+  /\d+ likes?\b/gi,
+  /\breply\b/gi,
+];
+
+function stripSocialBoilerplate(text) {
+  let cleaned = text;
+  for (const re of SOCIAL_BOILERPLATE_PATTERNS) cleaned = cleaned.replace(re, ' ');
+  return cleaned.replace(/\s+/g, ' ').trim();
+}
+
+function splitSentences(text) {
+  return text
+    .split(/(?<=[.!?])\s+|\n+/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
+// Usado quando o título da página é genérico demais ("Instagram", "Facebook"
+// — a rede social não expôs um título de verdade) para servir de nome do
+// empreendimento: procura, dentro do texto (geralmente um snippet bagunçado
+// de feed social), a primeira frase que realmente fala de um lançamento —
+// em vez de aceitar a primeira frase qualquer (que costuma ser boilerplate
+// tipo "Never miss a post from...").
+function findLaunchSentence(text) {
+  if (!text) return null;
+  const cleaned = stripSocialBoilerplate(text);
+  for (const sentence of splitSentences(cleaned)) {
+    if (sentence.length < 8 || sentence.length > 160) continue;
+    const normalized = normalizeText(sentence);
+    const hasRealEstate = REAL_ESTATE_KEYWORDS.some((kw) => normalized.includes(kw));
+    const hasLaunch = LAUNCH_SIGNAL_KEYWORDS.some((kw) => normalized.includes(kw));
+    if (hasRealEstate && hasLaunch) return sentence;
+  }
+  return null;
 }
 
 function hashId(...parts) {
@@ -106,4 +206,6 @@ module.exports = {
   extractEmails,
   textMentionsCity,
   textMentionsRealEstateLaunch,
+  textMentionsOtherBrazilianState,
+  findLaunchSentence,
 };

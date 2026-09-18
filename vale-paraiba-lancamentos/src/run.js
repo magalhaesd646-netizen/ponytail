@@ -18,7 +18,11 @@ const { findTechEmail } = require('./lib/emailFinder');
 const { sendDigest } = require('./lib/notifier');
 const { createAlertIssue } = require('./lib/githubIssue');
 const { fetchHtml } = require('./lib/http');
-const { textMentionsCity, textMentionsRealEstateLaunch } = require('./lib/text');
+const {
+  textMentionsCity,
+  textMentionsRealEstateLaunch,
+  textMentionsOtherBrazilianState,
+} = require('./lib/text');
 const state = require('./lib/state');
 
 // Padrão conservador o suficiente para caber no plano grátis do Tavily
@@ -71,13 +75,18 @@ function orderedCitiesForToday(cities, priorityCount = PRIORITY_CITY_COUNT) {
 // realmente sobre imóveis — sem isso, a busca por "lançamento" + cidade
 // também traz vaga de emprego, evento esportivo, previsão do tempo etc.,
 // porque a API não garante que a frase inteira da query apareça no
-// resultado.
+// resultado; 3) o texto não citar sigla de outro estado — pega o caso de
+// uma cidade do Vale do Paraíba homônima de rua/bairro em outro lugar do
+// Brasil (ex.: "Cruzeiro, SP" trazendo por engano um anúncio de Sarandi-PR).
 function filterRelevantResults(results, city) {
-  return results.filter(
-    (r) =>
-      textMentionsCity(`${r.title} ${r.snippet}`, city) &&
-      textMentionsRealEstateLaunch(`${r.title} ${r.snippet}`)
-  );
+  return results.filter((r) => {
+    const text = `${r.title} ${r.snippet}`;
+    return (
+      textMentionsCity(text, city) &&
+      textMentionsRealEstateLaunch(text) &&
+      !textMentionsOtherBrazilianState(text)
+    );
+  });
 }
 
 async function collectRawResultsForCity(city, budget) {

@@ -58,6 +58,7 @@
     letter-spacing: -0.02em;
   }
   .subtitle { color: var(--muted); font-size: 0.92rem; }
+  .subtitle .new-count { color: var(--new-text); font-weight: 700; }
 
   nav.tabs {
     position: sticky;
@@ -130,13 +131,17 @@
     transform: translateY(-2px);
     box-shadow: 0 2px 4px rgba(20, 20, 40, 0.06), 0 16px 32px -14px rgba(20, 20, 40, 0.22);
   }
-  .card h2 {
-    font-size: 1.03rem;
-    margin: 0 0 10px;
+  .card-top {
     display: flex;
-    align-items: baseline;
+    align-items: flex-start;
+    justify-content: space-between;
     gap: 8px;
-    flex-wrap: wrap;
+    margin: 0 0 10px;
+  }
+  .card-top h2 {
+    font-size: 1.03rem;
+    margin: 0;
+    line-height: 1.35;
   }
   .badge {
     font-size: 0.66rem;
@@ -147,6 +152,22 @@
     border-radius: 999px;
     background: var(--new-bg);
     color: var(--new-text);
+    flex-shrink: 0;
+    white-space: nowrap;
+  }
+  .meta-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin: 0 0 12px;
+  }
+  .meta-pill {
+    font-size: 0.74rem;
+    color: var(--muted);
+    background: var(--bg-soft);
+    padding: 3px 9px;
+    border-radius: 999px;
+    white-space: nowrap;
   }
   .rank-badge {
     font-size: 0.72rem;
@@ -293,6 +314,15 @@ function escapeHtml(str) {
     }
   }
 
+  function formatShortDate(iso) {
+    if (!iso) return null;
+    try {
+      return new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    } catch {
+      return null;
+    }
+  }
+
   let data = { generatedAt: null, cidades: 0, items: [] };
   try {
     const res = await fetch('./data.json', { cache: 'no-store' });
@@ -312,21 +342,28 @@ function escapeHtml(str) {
   }
 
   const generated = formatDate(data.generatedAt);
-  els.subtitle.textContent = items.length
-    ? `${items.length} lançamento(s) monitorados em ${data.cidades || cities.length} cidade(s)` +
-      (generated ? ` · atualizado em ${generated}` : '')
+  const newCount = items.filter((i) => i.isNew).length;
+  els.subtitle.innerHTML = items.length
+    ? `${escapeHtml(String(items.length))} lançamento(s) monitorados em ${escapeHtml(String(data.cidades || cities.length))} cidade(s)` +
+      (newCount ? ` · <span class="new-count">${escapeHtml(String(newCount))} novo(s)</span>` : '') +
+      (generated ? ` · atualizado em ${escapeHtml(generated)}` : '')
     : 'Nenhum dado ainda.';
 
   function cardHtml(item) {
     const emailBlock = item.emailContato
       ? `<div class="row"><b>E-mail (${escapeHtml(item.emailContato.departamento)}):</b> <a href="mailto:${escapeHtml(item.emailContato.email)}">${escapeHtml(item.emailContato.email)}</a></div>`
       : `<div class="row">E-mail: não encontrado automaticamente</div>`;
+    const foundDate = formatShortDate(item.firstSeen);
     return `
       <div class="card">
-        <h2>${escapeHtml(item.empreendimento || '(nome não identificado)')}
+        <div class="card-top">
+          <h2>${escapeHtml(item.empreendimento || '(nome não identificado)')}</h2>
           ${item.isNew ? '<span class="badge">novo</span>' : ''}
-        </h2>
-        <div class="row"><b>Cidade:</b> ${escapeHtml(item.cidade || '-')}</div>
+        </div>
+        <div class="meta-row">
+          <span class="meta-pill">📍 ${escapeHtml(item.cidade || '-')}</span>
+          ${foundDate ? `<span class="meta-pill">🗓️ encontrado em ${foundDate}</span>` : ''}
+        </div>
         <div class="row"><b>Construtora:</b> ${escapeHtml(item.construtora || 'não identificada automaticamente')}</div>
         <div class="row"><b>Incorporadora:</b> ${escapeHtml(item.incorporadora || 'não identificada automaticamente')}</div>
         ${emailBlock}

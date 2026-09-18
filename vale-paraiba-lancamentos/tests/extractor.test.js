@@ -53,6 +53,34 @@ test('findKnownBuilder usa palavra inteira e não confunde "even" com "eventos"'
   assert.deepEqual(findKnownBuilder('Novo empreendimento da Even em Jacareí', evenBuilder), evenBuilder[0]);
 });
 
+test('normalizeResult troca título genérico de rede social pela frase de lançamento do snippet (caso real)', () => {
+  const raw = {
+    title: 'Instagram',
+    link: 'https://www.instagram.com/p/exemplo',
+    city: 'São José dos Campos',
+    sourceType: 'official-sources',
+    snippet:
+      'Never miss a post from noticias.sjcampos. Photo by Notícias São José dos Campos on July 21, 2026. ' +
+      'May be an image of text. Lançamento do edifício Riza estabelece novo patamar para o mercado imobiliário. ' +
+      'O mercado imobiliário de São José dos Campos registrou um novo marco com o lançamento do Riza.',
+  };
+  const result = normalizeResult(raw, knownBuilders);
+  assert.notEqual(result.empreendimento, 'Instagram');
+  assert.match(result.empreendimento, /Riza/);
+});
+
+test('normalizeResult descarta (empreendimento nulo) quando título é genérico e o snippet não tem frase de lançamento', () => {
+  const raw = {
+    title: 'Instagram',
+    link: 'https://www.instagram.com/p/exemplo2',
+    city: 'São José dos Campos',
+    sourceType: 'official-sources',
+    snippet: 'Video by Fulano on March 3, 2026. May be an image of text.',
+  };
+  const result = normalizeResult(raw, knownBuilders);
+  assert.equal(result.empreendimento, null);
+});
+
 test('normalizeResult gera o mesmo id para a mesma cidade/fonte/url', () => {
   const raw = {
     title: 'X',

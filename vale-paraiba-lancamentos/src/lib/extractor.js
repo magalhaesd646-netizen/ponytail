@@ -2,7 +2,7 @@
 
 const fs = require('fs');
 const path = require('path');
-const { hashId, normalizeText } = require('./text');
+const { hashId, normalizeText, findLaunchSentence } = require('./text');
 
 const KNOWN_BUILDERS_PATH = path.join(__dirname, '..', '..', 'data', 'known-builders.json');
 
@@ -23,6 +23,22 @@ function cleanEmpreendimentoName(rawTitle) {
   if (!rawTitle) return null;
   const firstSegment = rawTitle.split(/\s+[-|–]\s+/)[0].trim();
   return firstSegment || rawTitle.trim();
+}
+
+// Título genérico da própria rede social, não da página específica — a
+// busca não conseguiu extrair um título de verdade (comum em post do
+// Instagram). Usar isso como "nome do empreendimento" só confunde.
+const JUNK_TITLES = new Set(['instagram', 'facebook', 'tiktok', 'youtube', 'linkedin', 'x', 'twitter']);
+
+function isJunkTitle(title) {
+  if (!title) return true;
+  const normalized = normalizeText(title).trim();
+  return JUNK_TITLES.has(normalized) || normalized.length < 4;
+}
+
+function truncate(str, max) {
+  if (str.length <= max) return str;
+  return str.slice(0, max - 1).trimEnd() + '…';
 }
 
 function escapeRegex(value) {
@@ -63,7 +79,14 @@ function normalizeResult(raw, knownBuilders = loadKnownBuilders()) {
   const title = raw.title || raw.name || '';
   const url = raw.link || raw.url || '';
   const snippet = raw.snippet || '';
-  const empreendimento = cleanEmpreendimentoName(title);
+  let empreendimento = cleanEmpreendimentoName(title);
+  if (isJunkTitle(empreendimento)) {
+    // Título genérico demais (ex.: "Instagram") — tenta achar dentro do
+    // snippet a frase que realmente fala do lançamento; se não achar
+    // nenhuma, o item fica sem nome e é descartado (ver src/run.js).
+    const sentence = findLaunchSentence(snippet);
+    empreendimento = sentence ? truncate(sentence, 90) : null;
+  }
 
   const combinedText = `${title} ${snippet}`;
   const builder = findKnownBuilder(combinedText, knownBuilders);

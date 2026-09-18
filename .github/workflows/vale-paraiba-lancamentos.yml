@@ -3,9 +3,13 @@ name: vale-paraiba-lancamentos
 on:
   schedule:
     # 11:00 UTC ~= 08:00 horário de Brasília (UTC-3, sem horário de verão).
-    # A cada 3 dias (dias 1,4,7,... do mês) — volume de lançamentos não
-    # justifica rodar todo dia e isso também poupa cota de busca.
-    - cron: '0 11 */3 * *'
+    # Voltou a ser diário: este workflow também é quem publica o GitHub
+    # Pages para os apps irmãos (investimentos, pos-obra — ver steps
+    # "Incluir app..." abaixo), que atualizam seus próprios dados todo dia;
+    # rodar a cada 3 dias atrasava o deploy deles também. O resumo matinal
+    # do usuário também passou a puxar os lançamentos novos daqui, então
+    # precisa de dados frescos todo dia.
+    - cron: '0 11 * * *'
   workflow_dispatch: {}
 
 defaults:

@@ -2,14 +2,16 @@ name: vale-paraiba-lancamentos
 
 on:
   schedule:
-    # 11:00 UTC ~= 08:00 horário de Brasília (UTC-3, sem horário de verão).
-    # Voltou a ser diário: este workflow também é quem publica o GitHub
-    # Pages para os apps irmãos (investimentos, pos-obra — ver steps
-    # "Incluir app..." abaixo), que atualizam seus próprios dados todo dia;
-    # rodar a cada 3 dias atrasava o deploy deles também. O resumo matinal
-    # do usuário também passou a puxar os lançamentos novos daqui, então
-    # precisa de dados frescos todo dia.
-    - cron: '0 11 * * *'
+    # 03:00 UTC ~= 00:00 horário de Brasília (UTC-3, sem horário de verão).
+    # Roda de madrugada de propósito: a rotina "Resumo matinal" (agendada
+    # p/ 07:30 BRT em dias úteis) busca o data.json publicado aqui e lista
+    # os lançamentos novos — rodando à meia-noite, os dados já estão
+    # prontos e frescos quando o resumo matinal sai. Diário (não a cada N
+    # dias): este workflow também publica o GitHub Pages compartilhado com
+    # os apps irmãos (investimentos, pos-obra — ver steps "Incluir app..."
+    # abaixo); o pos-obra.yml também republica esse mesmo site sozinho às
+    # 07:00 BRT, então o horário daqui não deixa nada desatualizado.
+    - cron: '0 3 * * *'
   workflow_dispatch: {}
 
 defaults:
